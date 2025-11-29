@@ -1,4 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi import Request, Form
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 import models, schemas, crud
 from database import engine, get_db, Base
@@ -7,6 +10,45 @@ from database import engine, get_db, Base
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="🚖 Proyecto Mototaxi - API", version="1.0")
+
+# ✅ CONFIGURAR TEMPLATES (HTML)
+templates = Jinja2Templates(directory="app/templates")
+
+# ✅ ARCHIVOS ESTÁTICOS (CSS)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# ✅ PÁGINA PRINCIPAL
+@app.get("/")
+def inicio(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+# ✅ LISTAR USUARIOS EN HTML
+@app.get("/usuarios")
+def usuarios_html(request: Request, db: Session = Depends(get_db)):
+    usuarios = db.query(models.Usuario).all()
+    return templates.TemplateResponse(
+        "usuarios.html",
+        {"request": request, "usuarios": usuarios}
+    )
+
+
+# ✅ FORMULARIO HTML PARA CREAR USUARIO
+@app.get("/usuarios/nuevo")
+def nuevo_usuario_form(request: Request):
+    return templates.TemplateResponse("usuario_form.html", {"request": request})
+
+
+@app.post("/usuarios/nuevo")
+def crear_usuario_html(
+    request: Request,
+    nombre: str = Form(...),
+    telefono: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    nuevo = schemas.UsuarioCrear(nombre=nombre, telefono=telefono)
+    crud.crear_usuario(db, nuevo)
+    return templates.TemplateResponse("usuario_ok.html", {"request": request})
 
 #Usuario
 @app.get("/api/usuarios/", tags=["Usuarios"])

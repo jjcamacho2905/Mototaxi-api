@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Usuarios</title>
+</head>
+<body>
+
+<h1>Lista de Usuarios</h1>
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Teléfono</th>
+        <th>Activo</th>
+    </tr>
+
+    {% for u in usuarios %}
+    <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.nombre }}</td>
+        <td>{{ u.telefono }}</td>
+        <td>{{ u.activo }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="/">Volver</a>
+
+</body>
+</html>
+

@@ -9,13 +9,14 @@ import models, schemas
 def crear_usuario(db: Session, usuario: schemas.UsuarioCrear):
     nuevo_usuario = models.Usuario(
         nombre=usuario.nombre,
-        correo=usuario.correo,
+        telefono=usuario.telefono,   # ✅ ESTE SÍ VA
         activo=True
     )
     db.add(nuevo_usuario)
     db.commit()
     db.refresh(nuevo_usuario)
     return nuevo_usuario
+
 
 
 def obtener_usuarios(db: Session):
