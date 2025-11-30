@@ -12,10 +12,10 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="🚖 Proyecto Mototaxi - API", version="1.0")
 
 # ✅ CONFIGURAR TEMPLATES (HTML)
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory="templates")
 
 # ✅ ARCHIVOS ESTÁTICOS (CSS)
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ✅ PÁGINA PRINCIPAL
 @app.get("/")
