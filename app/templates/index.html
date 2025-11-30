@@ -7,13 +7,33 @@
 </head>
 <body>
 
+<div class="formulario">
     <h1>🚖 Proyecto Mototaxi</h1>
     <p>Bienvenido al sistema de gestión</p>
 
-    <nav>
-        <a href="/usuarios">Usuarios</a> |
-        <a href="/docs">API Docs</a>
-    </nav>
+    <form method="post">
+        <div class="username">
+            <input type="text" required>
+            <span></span>
+            <label>Nombre de usuario</label>
+        </div>
+
+        <div class="username">
+            <input type="password" required>
+            <span></span>
+            <label>Contraseña</label>
+        </div>
+
+        <div class="recordar">¿Olvidó su contraseña?</div>
+
+        <input type="submit" value="Iniciar">
+    </form>
+</div>
+
+<nav>
+    <a href="/usuarios">Usuarios</a> |
+    <a href="/docs">API Docs</a>
+</nav>
 
 </body>
 </html>
