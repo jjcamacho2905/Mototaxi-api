@@ -3,6 +3,7 @@ from fastapi import Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from pathlib import Path
 import models, schemas, crud
 from database import engine, get_db, Base
 
@@ -11,11 +12,16 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="🚖 Proyecto Mototaxi - API", version="1.0")
 
-# ✅ CONFIGURAR TEMPLATES (HTML)
-templates = Jinja2Templates(directory="templates")
+# Rutas absolutas para evitar fallos por cambio de directorio en Render
+BASE_DIR = Path(__file__).parent
+TEMPLATES_DIR = BASE_DIR / "app" / "templates"
+STATIC_DIR = BASE_DIR / "app" / "static"
 
-# ✅ ARCHIVOS ESTÁTICOS (CSS)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# ✅ CONFIGURAR TEMPLATES (HTML) usando ruta absoluta
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+# ✅ ARCHIVOS ESTÁTICOS (CSS) usando ruta absoluta
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # ✅ PÁGINA PRINCIPAL
 @app.get("/")
