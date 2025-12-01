@@ -4,4 +4,6 @@ sqlalchemy
 pydantic
 python-multipart
 jinja2
+passlib[bcrypt]
+passlib[argon2]
 

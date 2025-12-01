@@ -1,13 +1,22 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 from typing import Optional
+from datetime import datetime
 
 # --- USUARIOS ---
 class UsuarioBase(BaseModel):
     nombre: str
     telefono: str
+    foto_path: Optional[str] = None
 
 class UsuarioCrear(UsuarioBase):
-    pass
+    # Contraseña en texto plano sólo para recepción; se guardará hasheada
+    contrasena: str
+
+    # Validación simple: limitar longitud para evitar contraseñas excesivas
+    # (bcrypt puro limita a 72 bytes; con bcrypt_sha256 ya no aplica, pero dejamos una cota razonable)
+    def model_post_init(self, __context):
+        if len(self.contrasena) > 256:
+            raise ValueError("La contraseña es demasiado larga (máximo 256 caracteres)")
 
 class Usuario(UsuarioBase):
     id: int
@@ -20,6 +29,7 @@ class Usuario(UsuarioBase):
 class ConductorBase(BaseModel):
     nombre: str
     licencia: Optional[str] = None
+    foto_path: Optional[str] = None
 
 class ConductorCrear(ConductorBase):
     pass
@@ -49,7 +59,18 @@ class ViajeBase(BaseModel):
     usuario_id: int
     conductor_id: int
     vehiculo_id: int
+    origen: Optional[str] = None
     destino: Optional[str] = None
+    precio: Optional[float] = None
+    fecha: Optional[datetime] = None
+    estado: Optional[str] = None
+
+    @field_validator('precio')
+    @classmethod
+    def precio_positivo(cls, v):
+        if v is not None and v < 0:
+            raise ValueError("El precio debe ser positivo")
+        return v
 
 class ViajeCrear(ViajeBase):
     pass

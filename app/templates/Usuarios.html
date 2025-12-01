@@ -3,12 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <title>Usuarios</title>
+    <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
 
+<div class="formulario" style="width: 90%; max-width: 900px;">
 <h1>Lista de Usuarios</h1>
 
-<table border="1">
+<form method="get" action="/api/usuarios/buscar/" onsubmit="this.action=this.action+document.getElementById('q').value;">
+  <div class="username">
+    <input id="q" type="text" placeholder="Buscar por nombre" required />
+    <span></span>
+    <label>Buscar</label>
+  </div>
+  <input type="submit" value="Buscar" />
+  <a style="margin-left:10px" href="/usuarios/nuevo">Crear usuario</a>
+</form>
+
+<table border="1" style="width:100%; background:white;">
     <tr>
         <th>ID</th>
         <th>Nombre</th>
@@ -26,7 +38,10 @@
     {% endfor %}
 </table>
 
-<a href="/">Volver</a>
+<p style="text-align:center; padding:10px 0;">
+  <a href="/">Volver</a>
+</p>
+</div>
 
 </body>
 </html>

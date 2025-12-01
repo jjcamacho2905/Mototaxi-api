@@ -1,21 +1,50 @@
 from sqlalchemy.orm import Session
 import models, schemas
+from passlib.context import CryptContext
 
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
-# ==========================
+# ======================
+# 🔐 Funciones de seguridad
+# ======================
+def hash_password(password: str):
+    return pwd_context.hash(password)
+
+def verify_password(password: str, hashed: str):
+    return pwd_context.verify(password, hashed)
+
+# ======================
 # 👤 CRUD USUARIOS
-# ==========================
-
+# ======================
 def crear_usuario(db: Session, usuario: schemas.UsuarioCrear):
-    nuevo_usuario = models.Usuario(
+    """Crea un usuario guardando la contraseña como hash seguro.
+
+    Usamos 'nombre' como identificador sencillo para el login.
+    """
+    nuevo = models.Usuario(
         nombre=usuario.nombre,
-        telefono=usuario.telefono,   # ✅ ESTE SÍ VA
-        activo=True
+        telefono=usuario.telefono,
+        foto_path=getattr(usuario, 'foto_path', None),
+        password_hash=hash_password(usuario.contrasena),
+        activo=True,
     )
-    db.add(nuevo_usuario)
+    db.add(nuevo)
     db.commit()
-    db.refresh(nuevo_usuario)
-    return nuevo_usuario
+    db.refresh(nuevo)
+    return nuevo
+
+
+def autenticar_usuario(db: Session, nombre: str, contrasena: str):
+    """Autentica por 'nombre' y verifica la contraseña contra el hash."""
+    usuario = db.query(models.Usuario).filter(models.Usuario.nombre == nombre).first()
+    if not usuario:
+        return None
+    if not usuario.password_hash:
+        return None
+    if not pwd_context.verify(contrasena, usuario.password_hash):
+        return None
+    return usuario
+
 
 
 
@@ -154,13 +183,17 @@ def eliminar_vehiculo(db: Session, vehiculo_id: int):
 # ==========================
 
 def crear_viaje(db: Session, viaje: schemas.ViajeCrear):
+    """Crea un viaje con campos enriquecidos (origen, destino, precio, fecha, estado)."""
     nuevo_viaje = models.Viaje(
-        origen=viaje.origen,
-        destino=viaje.destino,
-        costo=viaje.costo,
+        origen=getattr(viaje, 'origen', None),
+        destino=getattr(viaje, 'destino', None),
+        precio=getattr(viaje, 'precio', None),
+        fecha=getattr(viaje, 'fecha', None),
+        estado=getattr(viaje, 'estado', 'pendiente') or 'pendiente',
         conductor_id=viaje.conductor_id,
         vehiculo_id=viaje.vehiculo_id,
-        usuario_id=viaje.usuario_id
+        usuario_id=viaje.usuario_id,
+        activo=True,
     )
     db.add(nuevo_viaje)
     db.commit()

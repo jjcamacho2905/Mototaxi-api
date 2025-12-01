@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Nuevo Usuario</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="formulario">
+    <h1>Crear nuevo usuario</h1>
+    <form method="post" action="/usuarios/nuevo">
+      <div class="username">
+        <input type="text" name="nombre" required />
+        <span></span>
+        <label>Nombre</label>
+      </div>
+
+      <div class="username">
+        <input type="text" name="telefono" pattern="[0-9\-\+ ]{7,15}" required />
+        <span></span>
+        <label>Teléfono</label>
+      </div>
+
+      <div class="username">
+        <input type="password" name="contrasena" minlength="4" maxlength="256" required />
+        <span></span>
+        <label>Contraseña</label>
+      </div>
+
+      <input type="submit" value="Guardar usuario" />
+    </form>
+    <p style="text-align:center; padding: 10px 0;">
+      <a href="/usuarios">Ver lista de usuarios</a>
+    </p>
+  </div>
+</body>
+</html>

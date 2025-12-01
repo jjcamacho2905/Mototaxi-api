@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Proyecto Mototaxi</title>
+    <title>Proyecto Mototaxi - Login</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -11,15 +11,19 @@
     <h1>🚖 Proyecto Mototaxi</h1>
     <p>Bienvenido al sistema de gestión</p>
 
-    <form method="post">
+    {% if error %}
+    <p style="color: red; text-align:center">{{ error }}</p>
+    {% endif %}
+
+    <form method="post" action="/login">
         <div class="username">
-            <input type="text" required>
+            <input type="text" name="username" required>
             <span></span>
-            <label>Nombre de usuario</label>
+            <label>Nombre (para login)</label>
         </div>
 
         <div class="username">
-            <input type="password" required>
+            <input type="password" name="password" required>
             <span></span>
             <label>Contraseña</label>
         </div>
@@ -37,3 +41,4 @@
 
 </body>
 </html>
+
