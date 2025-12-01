@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Búsqueda - Mototaxi Supatá</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .search-header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .search-header h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .search-box input:focus {
+            border-color: #667eea;
+        }
+        
+        .search-box button {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .search-box button:hover {
+            background: #5568d3;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .results-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .results-header h2 {
+            color: #333;
+        }
+        
+        .results-count {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .category {
+            margin-bottom: 30px;
+        }
+        
+        .category h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .result-card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .result-card .icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .result-card h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .result-card p {
+            color: #666;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .result-card .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .badge.activo {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge.inactivo {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .no-results .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .no-results h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+        
+        .loading .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER DE BÚSQUEDA -->
+        <div class="search-header">
+            <h1>🔍 Búsqueda Global</h1>
+            <form class="search-box" onsubmit="buscar(event)">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Buscar usuarios, conductores o vehículos..."
+                    value=""
+                    autofocus
+                >
+                <button type="submit">Buscar</button>
+            </form>
+            <div class="back-link">
+                <a href="/dashboard">← Volver al Dashboard</a>
+            </div>
+        </div>
+        
+        <!-- CONTENEDOR DE RESULTADOS -->
+        <div class="results-container" id="resultsContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Escribe algo para buscar...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Obtener parámetro de búsqueda de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryParam = urlParams.get('q');
+        
+        if (queryParam) {
+            document.getElementById('searchInput').value = queryParam;
+            realizarBusqueda(queryParam);
+        }
+        
+        // Función para realizar búsqueda
+        function buscar(event) {
+            event.preventDefault();
+            const query = document.getElementById('searchInput').value.trim();
+            
+            if (!query) {
+                alert('Por favor ingresa un término de búsqueda');
+                return;
+            }
+            
+            // Actualizar URL
+            window.history.pushState({}, '', `/buscar?q=${encodeURIComponent(query)}`);
+            
+            // Realizar búsqueda
+            realizarBusqueda(query);
+        }
+        
+        // Función principal de búsqueda
+        async function realizarBusqueda(query) {
+            const container = document.getElementById('resultsContainer');
+            
+            // Mostrar loading
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Buscando "${query}"...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(`/api/buscar?q=${encodeURIComponent(query)}`);
+                const resultados = await response.json();
+                
+                mostrarResultados(query, resultados);
+            } catch (error) {
+                console.error('Error en búsqueda:', error);
+                container.innerHTML = `
+                    <div class="no-results">
+                        <div class="icon">❌</div>
+                        <h3>Error en la búsqueda</h3>
+                        <p>Hubo un problema al realizar la búsqueda. Intenta de nuevo.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Mostrar resultados
+        function mostrarResultados(query, resultados) {
+            const container = document.getElementById('resultsContainer');
+            
+            if (resultados.total === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        <div class="icon">🔍</div>
+                        <h3>No se encontraron resultados</h3>
+                        <p>No hay coincidencias para "${query}"</p>
+                        <p style="margin-top: 10px;">Intenta con otros términos de búsqueda.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="results-header">
+                    <h2>Resultados de búsqueda: "${query}"</h2>
+                    <span class="results-count">${resultados.total} resultado(s)</span>
+                </div>
+            `;
+            
+            // USUARIOS
+            if (resultados.usuarios.length > 0) {
+                html += `
+                    <div class="category">
+                        <h3>👥 Usuarios (${resultados.usuarios.length})</h3>
+                        <div class="results-grid">
+                `;
+                
+                resultados.usuarios.forEach(usuario => {
+                    html += `
+                        <div class="result-card">
+                            <div class="icon">👤</div>
+                            <h4>${usuario.nombre}</h4>
+                            <p><strong>Teléfono:</strong> ${usuario.telefono}</p>
+                            <p><strong>ID:</strong> ${usuario.id}</p>
+                            <span class="badge ${usuario.activo ? 'activo' : 'inactivo'}">
+                                ${usuario.activo ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                html += `</div></div>`;
+            }
+            
+            // CONDUCTORES
+            if (resultados.conductores.length > 0) {
+                html += `
+                    <div class="category">
+                        <h3>🏍️ Conductores (${resultados.conductores.length})</h3>
+                        <div class="results-grid">
+                `;
+                
+                resultados.conductores.forEach(conductor => {
+                    html += `
+                        <div class="result-card">
+                            <div class="icon">🏍️</div>
+                            <h4>${conductor.nombre}</h4>
+                            <p><strong>Licencia:</strong> ${conductor.licencia || 'N/A'}</p>
+                            <p><strong>ID:</strong> ${conductor.id}</p>
+                            <span class="badge ${conductor.activo ? 'activo' : 'inactivo'}">
+                                ${conductor.activo ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                html += `</div></div>`;
+            }
+            
+            // VEHÍCULOS
+            if (resultados.vehiculos.length > 0) {
+                html += `
+                    <div class="category">
+                        <h3>🚗 Vehículos (${resultados.vehiculos.length})</h3>
+                        <div class="results-grid">
+                `;
+                
+                resultados.vehiculos.forEach(vehiculo => {
+                    html += `
+                        <div class="result-card">
+                            <div class="icon">🚗</div>
+                            <h4>Placa: ${vehiculo.placa}</h4>
+                            <p><strong>Modelo:</strong> ${vehiculo.modelo || 'N/A'}</p>
+                            <p><strong>ID:</strong> ${vehiculo.id}</p>
+                            <span class="badge ${vehiculo.activo ? 'activo' : 'inactivo'}">
+                                ${vehiculo.activo ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                html += `</div></div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
