@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚗 Vehículos - Mototaxi Supatá</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .navbar {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .navbar a {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .navbar a:hover {
+            background: #5568d3;
+        }
+        
+        .actions {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .vehiculos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .vehiculo-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .vehiculo-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .vehiculo-card .icon {
+            font-size: 64px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .vehiculo-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 24px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .vehiculo-info {
+            margin-bottom: 10px;
+        }
+        
+        .vehiculo-info strong {
+            color: #666;
+            display: inline-block;
+            width: 80px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .badge.activo {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge.inactivo {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 14px;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+        }
+        
+        .btn-danger:hover {
+            background: #da190b;
+        }
+        
+        .btn-warning {
+            background: #ff9800;
+        }
+        
+        .btn-warning:hover {
+            background: #e68900;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .modal h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚗 Gestión de Vehículos</h1>
+            <nav class="navbar">
+                <a href="/dashboard">🏠 Dashboard</a>
+                <a href="/usuarios">👥 Usuarios</a>
+                <a href="/conductores">🏍️ Conductores</a>
+                <a href="/vehiculos">🚗 Vehículos</a>
+                <a href="/buscar">🔍 Buscar</a>
+                <a href="/">🚪 Salir</a>
+            </nav>
+        </header>
+        
+        <div class="actions">
+            <button class="btn" onclick="abrirModal()">➕ Nuevo Vehículo</button>
+        </div>
+        
+        <div id="vehiculosGrid" class="vehiculos-grid">
+            <div class="loading">⏳ Cargando vehículos...</div>
+        </div>
+    </div>
+    
+    <!-- Modal para crear vehículo -->
+    <div id="modalVehiculo" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2>➕ Nuevo Vehículo</h2>
+            <form id="formVehiculo" onsubmit="crearVehiculo(event)">
+                <div class="form-group">
+                    <label for="placa">Placa:</label>
+                    <input type="text" id="placa" name="placa" placeholder="ABC123" required pattern="[A-Z]{3}[0-9]{3}" title="Formato: ABC123">
+                </div>
+                
+                <div class="form-group">
+                    <label for="modelo">Modelo:</label>
+                    <input type="text" id="modelo" name="modelo" placeholder="Yamaha FZ 150" required>
+                </div>
+                
+                <button type="submit" class="btn">💾 Guardar Vehículo</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Cargar vehículos al iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarVehiculos();
+        });
+        
+        async function cargarVehiculos() {
+            try {
+                const response = await fetch('/api/vehiculos/');
+                const vehiculos = await response.json();
+                
+                const grid = document.getElementById('vehiculosGrid');
+                
+                if (vehiculos.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; color: white; padding: 40px;">
+                            <h2>No hay vehículos registrados</h2>
+                            <p>Haz clic en "Nuevo Vehículo" para agregar uno</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                grid.innerHTML = vehiculos.map(vehiculo => `
+                    <div class="vehiculo-card">
+                        <div class="icon">🏍️</div>
+                        <h3>${vehiculo.placa}</h3>
+                        
+                        <div class="vehiculo-info">
+                            <strong>ID:</strong> ${vehiculo.id}
+                        </div>
+                        
+                        <div class="vehiculo-info">
+                            <strong>Modelo:</strong> ${vehiculo.modelo || 'N/A'}
+                        </div>
+                        
+                        <span class="badge ${vehiculo.activo ? 'activo' : 'inactivo'}">
+                            ${vehiculo.activo ? '✅ Activo' : '❌ Inactivo'}
+                        </span>
+                        
+                        <div class="card-actions">
+                            ${vehiculo.activo ? `
+                                <button class="btn btn-small btn-warning" onclick="inactivarVehiculo(${vehiculo.id})">
+                                    ⏸️ Inactivar
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-small btn-danger" onclick="eliminarVehiculo(${vehiculo.id})">
+                                🗑️ Eliminar
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error cargando vehículos:', error);
+                document.getElementById('vehiculosGrid').innerHTML = `
+                    <div style="color: white; text-align: center; grid-column: 1/-1;">
+                        ❌ Error al cargar vehículos
+                    </div>
+                `;
+            }
+        }
+        
+        function abrirModal() {
+            document.getElementById('modalVehiculo').style.display = 'block';
+        }
+        
+        function cerrarModal() {
+            document.getElementById('modalVehiculo').style.display = 'none';
+            document.getElementById('formVehiculo').reset();
+        }
+        
+        async function crearVehiculo(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const vehiculo = {
+                placa: formData.get('placa').toUpperCase(),
+                modelo: formData.get('modelo')
+            };
+            
+            try {
+                const response = await fetch('/api/vehiculos/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(vehiculo)
+                });
+                
+                if (response.ok) {
+                    alert('✅ Vehículo creado exitosamente');
+                    cerrarModal();
+                    cargarVehiculos();
+                } else {
+                    alert('❌ Error al crear vehículo');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al crear vehículo');
+            }
+        }
+        
+        async function inactivarVehiculo(id) {
+            if (!confirm('¿Estás seguro de inactivar este vehículo?')) return;
+            
+            try {
+                const response = await fetch(`/api/vehiculos/${id}/inactivar`, {
+                    method: 'PATCH'
+                });
+                
+                if (response.ok) {
+                    alert('✅ Vehículo inactivado');
+                    cargarVehiculos();
+                } else {
+                    alert('❌ Error al inactivar vehículo');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al inactivar vehículo');
+            }
+        }
+        
+        async function eliminarVehiculo(id) {
+            if (!confirm('¿Estás seguro de eliminar este vehículo? Esta acción no se puede deshacer.')) return;
+            
+            try {
+                const response = await fetch(`/api/vehiculos/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('✅ Vehículo eliminado');
+                    cargarVehiculos();
+                } else {
+                    alert('❌ Error al eliminar vehículo');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al eliminar vehículo');
+            }
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalVehiculo');
+            if (event.target == modal) {
+                cerrarModal();
+            }
+        }
+    </script>
+</body>
+</html>
