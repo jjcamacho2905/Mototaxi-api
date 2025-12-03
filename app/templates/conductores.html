@@ -5,131 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏍️ Conductores - Mototaxi Supatá</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1200px; margin: 0 auto; }
         
         header {
             background: white;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
-        header h1 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
+        header h1 { color: #667eea; margin-bottom: 10px; }
         
-        .navbar {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
+        .navbar { display: flex; gap: 10px; flex-wrap: wrap; }
         
         .navbar a {
-            padding: 10px 20px;
+            padding: 10px 15px;
             background: #667eea;
             color: white;
             text-decoration: none;
             border-radius: 5px;
-            transition: all 0.3s;
-        }
-        
-        .navbar a:hover {
-            background: #5568d3;
         }
         
         .actions {
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
         .btn {
-            padding: 12px 24px;
+            padding: 10px 20px;
             background: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
             font-weight: bold;
-        }
-        
-        .btn:hover {
-            background: #45a049;
         }
         
         .conductores-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
         }
         
         .conductor-card {
             background: white;
-            padding: 25px;
+            padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
         }
         
-        .conductor-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .conductor-image {
+        .conductor-card img {
             width: 100%;
-            height: 200px;
+            height: 180px;
             object-fit: cover;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            background: #f0f0f0;
+            border-radius: 8px;
+            margin-bottom: 10px;
         }
         
         .conductor-card .icon {
-            font-size: 64px;
+            font-size: 60px;
             text-align: center;
-            margin-bottom: 15px;
-        }
-        
-        .conductor-card h3 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         
         .vehiculos-conductor {
-            background: #f8f9fa;
+            background: #f5f5f5;
             padding: 10px;
             border-radius: 5px;
             margin-top: 10px;
-        }
-        
-        .vehiculo-item {
-            padding: 5px;
-            margin: 5px 0;
-            background: white;
-            border-left: 3px solid #667eea;
-            padding-left: 10px;
         }
         
         .modal {
@@ -146,7 +99,7 @@
         
         .modal-content {
             background: white;
-            margin: 3% auto;
+            margin: 20px auto;
             padding: 30px;
             border-radius: 10px;
             width: 90%;
@@ -154,7 +107,7 @@
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
         .form-group label {
@@ -177,59 +130,28 @@
         }
         
         .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding: 15px;
             background: #e8f5e9;
+            padding: 15px;
             border-radius: 5px;
-            cursor: pointer;
-        }
-        
-        .checkbox-group input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
+            margin: 15px 0;
             cursor: pointer;
         }
         
         .vehiculo-fields {
             display: none;
-            background: #f0f7ff;
-            padding: 20px;
+            background: #e3f2fd;
+            padding: 15px;
             border-radius: 5px;
             margin-top: 10px;
-            border-left: 4px solid #667eea;
         }
         
-        .vehiculo-fields.active {
-            display: block;
-        }
+        .vehiculo-fields.show { display: block; }
         
-        .image-preview {
-            margin-top: 10px;
-            text-align: center;
-        }
-        
-        .image-preview img {
-            max-width: 100%;
+        .preview-image {
+            max-width: 200px;
             max-height: 200px;
-            border-radius: 10px;
-            border: 2px solid #ddd;
-        }
-        
-        .upload-area {
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #f9f9ff;
+            margin-top: 10px;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -252,7 +174,7 @@
         </div>
         
         <div id="conductoresGrid" class="conductores-grid">
-            <p style="color: white; text-align: center;">⏳ Cargando conductores...</p>
+            <p style="color: white; text-align: center;">⏳ Cargando...</p>
         </div>
     </div>
     
@@ -262,88 +184,86 @@
             <h2>➕ Nuevo Conductor</h2>
             <form id="formConductor" onsubmit="crearConductor(event)">
                 <div class="form-group">
-                    <label>Nombre completo:</label>
-                    <input type="text" id="nombre" required minlength="3">
+                    <label>📛 Nombre:</label>
+                    <input type="text" id="nombre" required>
                 </div>
                 
                 <div class="form-group">
-                    <label>Número de licencia:</label>
+                    <label>🪪 Licencia:</label>
                     <input type="text" id="licencia" required>
                 </div>
                 
                 <div class="form-group">
-                    <label>Foto del conductor:</label>
-                    <div class="upload-area" onclick="document.getElementById('fotoInput').click()">
-                        <p>📷 Click para seleccionar imagen</p>
-                        <p style="font-size: 12px; color: #999;">o arrastra y suelta aquí</p>
-                    </div>
-                    <input type="file" id="fotoInput" accept="image/*" style="display: none;" onchange="previewImage(this)">
-                    <div class="image-preview" id="imagePreview"></div>
+                    <label>📷 Foto del conductor:</label>
+                    <input type="file" id="fotoConductor" accept="image/*" onchange="previewImage(this, 'previewConductor')">
+                    <img id="previewConductor" class="preview-image" style="display:none;">
                 </div>
                 
-                <!-- NUEVO: Checkbox para crear vehículo -->
-                <div class="checkbox-group" onclick="toggleVehiculoFields()">
+                <div class="checkbox-group" onclick="toggleVehiculo()">
                     <input type="checkbox" id="crearVehiculo">
-                    <label for="crearVehiculo" style="cursor: pointer; margin: 0;">
+                    <label for="crearVehiculo" style="display:inline; cursor:pointer; margin:0;">
                         🚗 ¿Crear vehículo para este conductor?
                     </label>
                 </div>
                 
-                <!-- NUEVO: Campos de vehículo (ocultos por defecto) -->
                 <div id="vehiculoFields" class="vehiculo-fields">
-                    <h3 style="margin-bottom: 15px; color: #667eea;">🚗 Datos del Vehículo</h3>
+                    <h3 style="margin-bottom:10px;">🚗 Datos del Vehículo</h3>
                     
                     <div class="form-group">
-                        <label>Placa del vehículo:</label>
-                        <input type="text" id="placaVehiculo" placeholder="Ej: ABC123" 
-                               style="text-transform: uppercase;">
+                        <label>🔢 Placa:</label>
+                        <input type="text" id="placaVehiculo" placeholder="ABC123">
                     </div>
                     
                     <div class="form-group">
-                        <label>Modelo:</label>
-                        <input type="text" id="modeloVehiculo" placeholder="Ej: Pulsar 180">
+                        <label>🏍️ Modelo:</label>
+                        <input type="text" id="modeloVehiculo" placeholder="Pulsar 180">
                     </div>
                     
-                    <p style="color: #666; font-size: 14px; margin-top: 10px;">
-                        💡 El vehículo se asignará automáticamente a este conductor
-                    </p>
+                    <div class="form-group">
+                        <label>📷 Foto del vehículo:</label>
+                        <input type="file" id="fotoVehiculo" accept="image/*" onchange="previewImage(this, 'previewVehiculo')">
+                        <img id="previewVehiculo" class="preview-image" style="display:none;">
+                    </div>
                 </div>
                 
-                <button type="submit" class="btn">💾 Guardar Conductor</button>
+                <button type="submit" class="btn" style="width:100%; margin-top:15px;">💾 Guardar</button>
             </form>
         </div>
     </div>
     
     <script>
-        let imagenSeleccionada = null;
+        let fotoConductorFile = null;
+        let fotoVehiculoFile = null;
         
         document.addEventListener('DOMContentLoaded', cargarConductores);
         
-        function toggleVehiculoFields() {
+        function toggleVehiculo() {
             const checkbox = document.getElementById('crearVehiculo');
             const fields = document.getElementById('vehiculoFields');
-            const placaInput = document.getElementById('placaVehiculo');
-            
             checkbox.checked = !checkbox.checked;
             
             if (checkbox.checked) {
-                fields.classList.add('active');
-                placaInput.required = true;
+                fields.classList.add('show');
             } else {
-                fields.classList.remove('active');
-                placaInput.required = false;
+                fields.classList.remove('show');
             }
         }
         
-        function previewImage(input) {
-            const preview = document.getElementById('imagePreview');
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
             
             if (input.files && input.files[0]) {
-                imagenSeleccionada = input.files[0];
                 const reader = new FileReader();
                 
+                if (previewId === 'previewConductor') {
+                    fotoConductorFile = input.files[0];
+                } else {
+                    fotoVehiculoFile = input.files[0];
+                }
+                
                 reader.onload = function(e) {
-                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
                 };
                 
                 reader.readAsDataURL(input.files[0]);
@@ -358,36 +278,31 @@
                 const grid = document.getElementById('conductoresGrid');
                 
                 if (conductores.length === 0) {
-                    grid.innerHTML = '<p style="color: white; text-align: center;">No hay conductores</p>';
+                    grid.innerHTML = '<p style="color: white;">No hay conductores</p>';
                     return;
                 }
                 
                 grid.innerHTML = conductores.map(c => {
-                    // Mostrar vehículos del conductor
                     let vehiculosHTML = '';
                     if (c.vehiculos && c.vehiculos.length > 0) {
                         vehiculosHTML = `
                             <div class="vehiculos-conductor">
                                 <strong>🚗 Vehículos (${c.vehiculos.length}):</strong>
                                 ${c.vehiculos.map(v => `
-                                    <div class="vehiculo-item">
+                                    <div style="margin:5px 0;">
                                         🏍️ ${v.placa} - ${v.modelo || 'N/A'}
                                     </div>
                                 `).join('')}
                             </div>
                         `;
                     } else {
-                        vehiculosHTML = `
-                            <div class="vehiculos-conductor">
-                                <small style="color: #999;">⚠️ Sin vehículos asignados</small>
-                            </div>
-                        `;
+                        vehiculosHTML = '<small style="color:#999;">Sin vehículos</small>';
                     }
                     
                     return `
                         <div class="conductor-card">
                             ${c.foto_path 
-                                ? `<img src="${c.foto_path}" class="conductor-image" alt="${c.nombre}">`
+                                ? `<img src="${c.foto_path}" alt="${c.nombre}">`
                                 : '<div class="icon">🏍️</div>'
                             }
                             <h3>${c.nombre}</h3>
@@ -409,9 +324,11 @@
         function cerrarModal() {
             document.getElementById('modalConductor').style.display = 'none';
             document.getElementById('formConductor').reset();
-            document.getElementById('imagePreview').innerHTML = '';
-            document.getElementById('vehiculoFields').classList.remove('active');
-            imagenSeleccionada = null;
+            document.getElementById('previewConductor').style.display = 'none';
+            document.getElementById('previewVehiculo').style.display = 'none';
+            document.getElementById('vehiculoFields').classList.remove('show');
+            fotoConductorFile = null;
+            fotoVehiculoFile = null;
         }
         
         async function crearConductor(event) {
@@ -420,9 +337,8 @@
             const crearVehiculo = document.getElementById('crearVehiculo').checked;
             const placaVehiculo = document.getElementById('placaVehiculo').value;
             
-            // Validar que si se marcó crear vehículo, tenga placa
             if (crearVehiculo && !placaVehiculo) {
-                alert('⚠️ Por favor ingresa la placa del vehículo');
+                alert('⚠️ Ingresa la placa del vehículo');
                 return;
             }
             
@@ -435,46 +351,57 @@
             };
             
             try {
-                // 1. Crear el conductor (con o sin vehículo)
-                const response = await fetch('/api/conductores/', {
+                // 1. Crear conductor
+                const res = await fetch('/api/conductores/', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(conductor)
                 });
                 
-                if (response.ok) {
-                    const conductorCreado = await response.json();
+                if (!res.ok) {
+                    alert('❌ Error al crear conductor');
+                    return;
+                }
+                
+                const conductorCreado = await res.json();
+                
+                // 2. Subir foto del conductor
+                if (fotoConductorFile) {
+                    const fdConductor = new FormData();
+                    fdConductor.append('file', fotoConductorFile);
+                    await fetch(`/api/upload/conductor/${conductorCreado.id}`, {
+                        method: 'POST',
+                        body: fdConductor
+                    });
+                }
+                
+                // 3. Si creó vehículo, buscar su ID y subir foto
+                if (crearVehiculo && fotoVehiculoFile) {
+                    // Obtener vehículos del conductor
+                    const vehRes = await fetch(`/api/vehiculos/conductor/${conductorCreado.id}`);
+                    const vehData = await vehRes.json();
                     
-                    // 2. Subir la imagen si existe
-                    if (imagenSeleccionada) {
-                        const formDataImagen = new FormData();
-                        formDataImagen.append('file', imagenSeleccionada);
-                        
-                        await fetch(`/api/upload/conductor/${conductorCreado.id}`, {
+                    if (vehData.vehiculos && vehData.vehiculos.length > 0) {
+                        const vehiculoId = vehData.vehiculos[0].id;
+                        const fdVehiculo = new FormData();
+                        fdVehiculo.append('file', fotoVehiculoFile);
+                        await fetch(`/api/upload/vehiculo/${vehiculoId}`, {
                             method: 'POST',
-                            body: formDataImagen
+                            body: fdVehiculo
                         });
                     }
-                    
-                    let mensaje = '✅ Conductor creado exitosamente';
-                    if (crearVehiculo) {
-                        mensaje += `\n🚗 Vehículo ${placaVehiculo} asignado correctamente`;
-                    }
-                    
-                    alert(mensaje);
-                    cerrarModal();
-                    cargarConductores();
-                } else {
-                    const error = await response.json();
-                    alert('❌ Error: ' + JSON.stringify(error));
                 }
+                
+                alert('✅ Conductor creado exitosamente' + (crearVehiculo ? '\n🚗 Vehículo asignado' : ''));
+                cerrarModal();
+                cargarConductores();
+                
             } catch (error) {
                 console.error('Error:', error);
                 alert('❌ Error al crear conductor');
             }
         }
         
-        // Cerrar modal al hacer clic fuera
         window.onclick = function(event) {
             const modal = document.getElementById('modalConductor');
             if (event.target == modal) {
