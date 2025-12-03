@@ -2,43 +2,605 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Proyecto Mototaxi - Login</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚖 Mototaxi Supatá - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .login-header .icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .login-header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .input-wrapper .icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: #999;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px 15px 15px 50px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group input.error {
+            border-color: #f44336;
+            animation: shake 0.3s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .error-message {
+            color: #f44336;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+            animation: slideDown 0.3s;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 20px;
+            color: #999;
+            user-select: none;
+        }
+        
+        .password-toggle:hover {
+            color: #667eea;
+        }
+        
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .forgot-password {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-login:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .btn-login.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        .btn-login .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn-login.loading .spinner {
+            display: block;
+        }
+        
+        .btn-login.loading .text {
+            display: none;
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            position: relative;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e0e0e0;
+        }
+        
+        .divider span {
+            background: white;
+            padding: 0 15px;
+            color: #999;
+            font-size: 14px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .register-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.3s;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+        
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+        
+        /* Strength meter para contraseña */
+        .password-strength {
+            margin-top: 8px;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .password-strength.show {
+            display: block;
+        }
+        
+        .password-strength-bar {
+            height: 100%;
+            transition: all 0.3s;
+            border-radius: 2px;
+        }
+        
+        .strength-weak { 
+            width: 33%; 
+            background: #f44336; 
+        }
+        
+        .strength-medium { 
+            width: 66%; 
+            background: #ff9800; 
+        }
+        
+        .strength-strong { 
+            width: 100%; 
+            background: #4caf50; 
+        }
+        
+        .password-hint {
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-
-<div class="formulario">
-    <h1>🚖 Proyecto Mototaxi</h1>
-    <p>Bienvenido al sistema de gestión</p>
-
-    {% if error %}
-    <p style="color: red; text-align:center">{{ error }}</p>
-    {% endif %}
-
-    <form method="post" action="/login">
-        <div class="username">
-            <input type="text" name="username" required>
-            <span></span>
-            <label>Nombre (para login)</label>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="icon">🚖</div>
+            <h1>Mototaxi Supatá</h1>
+            <p>Sistema de Gestión de Transporte</p>
         </div>
-
-        <div class="username">
-            <input type="password" name="password" required>
-            <span></span>
-            <label>Contraseña</label>
+        
+        <div id="alertBox" class="alert"></div>
+        
+        <form id="loginForm" method="POST" action="/login">
+            <div class="form-group">
+                <label for="username">👤 Usuario</label>
+                <div class="input-wrapper">
+                    <span class="icon">👤</span>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="Ingresa tu nombre de usuario"
+                        autocomplete="username"
+                        required
+                    >
+                </div>
+                <div class="error-message" id="usernameError">
+                    Por favor ingresa un nombre de usuario válido (mínimo 3 caracteres)
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">🔒 Contraseña</label>
+                <div class="input-wrapper">
+                    <span class="icon">🔒</span>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Ingresa tu contraseña"
+                        autocomplete="current-password"
+                        required
+                    >
+                    <span class="password-toggle" onclick="togglePassword()">👁️</span>
+                </div>
+                <div class="password-strength" id="passwordStrength">
+                    <div class="password-strength-bar" id="strengthBar"></div>
+                </div>
+                <div class="password-hint">Mínimo 4 caracteres</div>
+                <div class="error-message" id="passwordError">
+                    La contraseña debe tener al menos 4 caracteres
+                </div>
+            </div>
+            
+            <div class="remember-forgot">
+                <label class="remember-me">
+                    <input type="checkbox" id="rememberMe">
+                    <span>Recordarme</span>
+                </label>
+                <a href="#" class="forgot-password" onclick="forgotPassword(event)">
+                    ¿Olvidaste tu contraseña?
+                </a>
+            </div>
+            
+            <button type="submit" class="btn-login" id="loginBtn">
+                <span class="text">Iniciar Sesión</span>
+                <div class="spinner"></div>
+            </button>
+        </form>
+        
+        <div class="divider">
+            <span>¿No tienes cuenta?</span>
         </div>
-
-        <div class="recordar">¿Olvidó su contraseña?</div>
-
-        <input type="submit" value="Iniciar">
-    </form>
-</div>
-
-<nav>
-    <a href="/usuarios">Usuarios</a> |
-    <a href="/docs">API Docs</a>
-</nav>
-
+        
+        <div class="register-link">
+            <a href="/register">Regístrate aquí</a>
+        </div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const alertBox = document.getElementById('alertBox');
+        
+        // Cargar "recordarme" del localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUsername = localStorage.getItem('rememberedUser');
+            if (savedUsername) {
+                usernameInput.value = savedUsername;
+                document.getElementById('rememberMe').checked = true;
+            }
+        });
+        
+        // Toggle contraseña
+        function togglePassword() {
+            const type = passwordInput.type === 'password' ? 'text' : 'password';
+            passwordInput.type = type;
+        }
+        
+        // Validación en tiempo real - Usuario
+        usernameInput.addEventListener('input', (e) => {
+            const value = e.target.value;
+            const errorMsg = document.getElementById('usernameError');
+            
+            if (value.length > 0 && value.length < 3) {
+                usernameInput.classList.add('error');
+                errorMsg.classList.add('show');
+            } else {
+                usernameInput.classList.remove('error');
+                errorMsg.classList.remove('show');
+            }
+        });
+        
+        // Medidor de fortaleza de contraseña
+        passwordInput.addEventListener('input', (e) => {
+            const value = e.target.value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            const strengthBar = document.getElementById('strengthBar');
+            const errorMsg = document.getElementById('passwordError');
+            
+            if (value.length > 0) {
+                strengthDiv.classList.add('show');
+                
+                // Calcular fortaleza
+                let strength = 0;
+                if (value.length >= 4) strength = 1;
+                if (value.length >= 8) strength = 2;
+                if (value.length >= 8 && /[A-Z]/.test(value) && /[0-9]/.test(value)) strength = 3;
+                
+                strengthBar.className = 'password-strength-bar';
+                if (strength === 1) strengthBar.classList.add('strength-weak');
+                else if (strength === 2) strengthBar.classList.add('strength-medium');
+                else if (strength === 3) strengthBar.classList.add('strength-strong');
+                
+                if (value.length < 4) {
+                    passwordInput.classList.add('error');
+                    errorMsg.classList.add('show');
+                } else {
+                    passwordInput.classList.remove('error');
+                    errorMsg.classList.remove('show');
+                }
+            } else {
+                strengthDiv.classList.remove('show');
+                passwordInput.classList.remove('error');
+                errorMsg.classList.remove('show');
+            }
+        });
+        
+        // Validación del formulario
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validar campos
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+            
+            let hasError = false;
+            
+            if (username.length < 3) {
+                usernameInput.classList.add('error');
+                document.getElementById('usernameError').classList.add('show');
+                hasError = true;
+            }
+            
+            if (password.length < 4) {
+                passwordInput.classList.add('error');
+                document.getElementById('passwordError').classList.add('show');
+                hasError = true;
+            }
+            
+            if (hasError) {
+                showAlert('Por favor completa todos los campos correctamente', 'error');
+                return;
+            }
+            
+            // Mostrar loading
+            loginBtn.classList.add('loading');
+            
+            try {
+                // Simular delay de red (remover en producción)
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // Guardar "recordarme"
+                if (document.getElementById('rememberMe').checked) {
+                    localStorage.setItem('rememberedUser', username);
+                } else {
+                    localStorage.removeItem('rememberedUser');
+                }
+                
+                // Enviar formulario
+                form.submit();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error al iniciar sesión. Intenta de nuevo.', 'error');
+                loginBtn.classList.remove('loading');
+            }
+        });
+        
+        // Función para mostrar alertas
+        function showAlert(message, type) {
+            alertBox.className = `alert alert-${type} show`;
+            alertBox.textContent = message;
+            
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+            }, 5000);
+        }
+        
+        // Recuperar contraseña
+        function forgotPassword(event) {
+            event.preventDefault();
+            showAlert('Funcionalidad de recuperación de contraseña próximamente', 'error');
+        }
+        
+        // Detectar Enter en los inputs
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') passwordInput.focus();
+        });
+    </script>
 </body>
 </html>
-
