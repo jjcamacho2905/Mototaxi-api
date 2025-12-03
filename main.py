@@ -118,6 +118,18 @@ def vehiculos_page(request: Request):
     return templates.TemplateResponse("vehiculos.html", {"request": request})
 
 
+@app.get("/analisis", tags=["Páginas HTML"])  # ← AGREGAR ESTA RUTA AQUÍ
+def analisis_page(request: Request):
+    """Página de análisis con datos históricos"""
+    return templates.TemplateResponse("analisis.html", {"request": request})
+
+
+@app.get("/viajes", tags=["Páginas HTML"])
+def viajes_page(request: Request):
+    """Página de gestión de viajes"""
+    return templates.TemplateResponse("viajes.html", {"request": request})
+
+
 # ============================================
 # 👤 USUARIOS HTML
 # ============================================
@@ -312,6 +324,180 @@ def eliminar_viaje(viaje_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
     return {"mensaje": "Viaje eliminado correctamente"}
 
+# ============================================
+# 📊 SECCIÓN: ANÁLISIS Y DATOS HISTÓRICOS (NUEVO)
+# ============================================
+
+@app.get("/analisis", tags=["Páginas HTML"])
+def analisis_page(request: Request):
+    """Página de análisis con datos históricos"""
+    return templates.TemplateResponse("analisis.html", {"request": request})
+
+
+@app.get("/api/rutas/historicas", tags=["Análisis"])
+def obtener_rutas_historicas(db: Session = Depends(get_db)):
+    """Obtener todas las rutas históricas registradas"""
+    rutas = db.query(models.RutaHistorica).filter(
+        models.RutaHistorica.activo == True
+    ).all()
+    return {"rutas": rutas}
+
+
+@app.get("/api/rutas/sugerir-tarifa", tags=["Análisis"])
+def sugerir_tarifa(
+    origen: str,
+    destino: str,
+    distancia_km: float = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Sugiere una tarifa basada en datos históricos.
+    Si la ruta no existe, calcula basado en distancia.
+    """
+    # Buscar ruta histórica
+    ruta = db.query(models.RutaHistorica).filter(
+        models.RutaHistorica.origen.ilike(f"%{origen}%"),
+        models.RutaHistorica.destino.ilike(f"%{destino}%"),
+        models.RutaHistorica.activo == True
+    ).first()
+    
+    if ruta:
+        return {
+            "origen": ruta.origen,
+            "destino": ruta.destino,
+            "tarifa_sugerida": ruta.tarifa_base,
+            "tarifa_minima": ruta.tarifa_base * 0.9,
+            "tarifa_maxima": ruta.tarifa_maxima or ruta.tarifa_base * 1.2,
+            "tiempo_estimado": ruta.tiempo_estimado_min,
+            "basado_en": "historico",
+            "viajes_historicos": ruta.viajes_historicos
+        }
+    
+    # Si no existe, calcular por distancia
+    if distancia_km:
+        tarifa_base = distancia_km * 2000  # $2000 COP por km
+        return {
+            "origen": origen,
+            "destino": destino,
+            "tarifa_sugerida": tarifa_base,
+            "tarifa_minima": tarifa_base * 0.9,
+            "tarifa_maxima": tarifa_base * 1.2,
+            "basado_en": "calculo",
+            "nota": "Ruta nueva - tarifa calculada por distancia"
+        }
+    
+    return {
+        "origen": origen,
+        "destino": destino,
+        "tarifa_sugerida": 5000,
+        "basado_en": "default",
+        "nota": "Proporciona la distancia para un cálculo más preciso"
+    }
+
+
+@app.get("/api/rutas/populares", tags=["Análisis"])
+def rutas_mas_populares(top: int = 10, db: Session = Depends(get_db)):
+    """Obtener las rutas más utilizadas"""
+    rutas = db.query(models.RutaHistorica).filter(
+        models.RutaHistorica.activo == True
+    ).order_by(
+        models.RutaHistorica.viajes_historicos.desc()
+    ).limit(top).all()
+    
+    return {"rutas": rutas}
+
+
+@app.get("/api/rutas/estadisticas", tags=["Análisis"])
+def estadisticas_rutas(db: Session = Depends(get_db)):
+    """Estadísticas generales de rutas"""
+    from sqlalchemy import func
+    
+    stats = db.query(
+        func.count(models.RutaHistorica.id).label('total_rutas'),
+        func.avg(models.RutaHistorica.tarifa_base).label('tarifa_promedio'),
+        func.sum(models.RutaHistorica.viajes_historicos).label('total_viajes_historicos'),
+        func.avg(models.RutaHistorica.distancia_km).label('distancia_promedio_km')
+    ).filter(models.RutaHistorica.activo == True).first()
+    
+    return {
+        "total_rutas": stats.total_rutas or 0,
+        "tarifa_promedio": round(stats.tarifa_promedio or 0, 2),
+        "total_viajes_historicos": stats.total_viajes_historicos or 0,
+        "distancia_promedio_km": round(stats.distancia_promedio_km or 0, 2)
+    }
+
+
+@app.get("/api/analisis/recomendaciones", tags=["Análisis"])
+def obtener_recomendaciones(db: Session = Depends(get_db)):
+    """
+    Genera recomendaciones inteligentes basadas en datos históricos
+    """
+    recomendaciones = []
+    
+    # 1. Identificar rutas populares con baja tarifa
+    rutas_populares = db.query(models.RutaHistorica).filter(
+        models.RutaHistorica.viajes_historicos > 10,
+        models.RutaHistorica.activo == True
+    ).order_by(models.RutaHistorica.viajes_historicos.desc()).limit(5).all()
+    
+    for ruta in rutas_populares:
+        recomendaciones.append({
+            "tipo": "ruta_popular",
+            "ruta": f"{ruta.origen} → {ruta.destino}",
+            "mensaje": f"Ruta muy demandada ({ruta.viajes_historicos} viajes)",
+            "accion": "Considerar asignar más conductores a esta ruta"
+        })
+    
+    # 2. Identificar rutas con alta tarifa y pocos viajes
+    rutas_oportunidad = db.query(models.RutaHistorica).filter(
+        models.RutaHistorica.viajes_historicos < 5,
+        models.RutaHistorica.tarifa_base > 10000,
+        models.RutaHistorica.activo == True
+    ).all()
+    
+    for ruta in rutas_oportunidad:
+        recomendaciones.append({
+            "tipo": "oportunidad",
+            "ruta": f"{ruta.origen} → {ruta.destino}",
+            "mensaje": f"Ruta de alta tarifa (${ruta.tarifa_base:,.0f}) con poca demanda",
+            "accion": "Promocionar esta ruta para aumentar viajes"
+        })
+    
+    return {
+        "recomendaciones": recomendaciones,
+        "total_recomendaciones": len(recomendaciones)
+    }
+
+
+@app.get("/api/analisis/comparativo", tags=["Análisis"])
+def analisis_comparativo(db: Session = Depends(get_db)):
+    """Compara datos del sistema actual vs históricos"""
+    from sqlalchemy import func
+    
+    # Datos actuales del sistema
+    viajes_sistema = db.query(
+        func.count(models.Viaje.id).label('total'),
+        func.avg(models.Viaje.precio).label('precio_promedio')
+    ).filter(models.Viaje.activo == True).first()
+    
+    # Datos históricos
+    datos_historicos = db.query(
+        func.avg(models.RutaHistorica.tarifa_base).label('tarifa_promedio'),
+        func.sum(models.RutaHistorica.viajes_historicos).label('total_historico')
+    ).filter(models.RutaHistorica.activo == True).first()
+    
+    return {
+        "viajes_sistema": {
+            "total": viajes_sistema.total or 0,
+            "precio_promedio": round(viajes_sistema.precio_promedio or 0, 2)
+        },
+        "datos_historicos": {
+            "tarifa_promedio": round(datos_historicos.tarifa_promedio or 0, 2),
+            "total_viajes": datos_historicos.total_historico or 0
+        }
+    }
+
+
 
 # ============================================
 # 📸 SECCIÓN: SUBIDA DE IMÁGENES
@@ -445,8 +631,6 @@ def buscar_global(q: str, db: Session = Depends(get_db)):
         + len(resultados["vehiculos"])
     )
     return resultados
-
-
 
 
 # ============================================
