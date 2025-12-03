@@ -117,6 +117,21 @@
             margin-bottom: 15px;
         }
         
+        .vehiculos-conductor {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .vehiculo-item {
+            padding: 5px;
+            margin: 5px 0;
+            background: white;
+            border-left: 3px solid #667eea;
+            padding-left: 10px;
+        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -131,11 +146,11 @@
         
         .modal-content {
             background: white;
-            margin: 5% auto;
+            margin: 3% auto;
             padding: 30px;
             border-radius: 10px;
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
         }
         
         .form-group {
@@ -161,7 +176,36 @@
             cursor: pointer;
         }
         
-        /* Preview de imagen */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .vehiculo-fields {
+            display: none;
+            background: #f0f7ff;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .vehiculo-fields.active {
+            display: block;
+        }
+        
         .image-preview {
             margin-top: 10px;
             text-align: center;
@@ -186,11 +230,6 @@
         .upload-area:hover {
             border-color: #667eea;
             background: #f9f9ff;
-        }
-        
-        .upload-area.dragging {
-            border-color: #4CAF50;
-            background: #f0fff4;
         }
     </style>
 </head>
@@ -223,18 +262,18 @@
             <h2>➕ Nuevo Conductor</h2>
             <form id="formConductor" onsubmit="crearConductor(event)">
                 <div class="form-group">
-                    <label>Nombre:</label>
-                    <input type="text" name="nombre" required>
+                    <label>Nombre completo:</label>
+                    <input type="text" id="nombre" required minlength="3">
                 </div>
                 
                 <div class="form-group">
-                    <label>Licencia:</label>
-                    <input type="text" name="licencia" required>
+                    <label>Número de licencia:</label>
+                    <input type="text" id="licencia" required>
                 </div>
                 
                 <div class="form-group">
                     <label>Foto del conductor:</label>
-                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fotoInput').click()">
+                    <div class="upload-area" onclick="document.getElementById('fotoInput').click()">
                         <p>📷 Click para seleccionar imagen</p>
                         <p style="font-size: 12px; color: #999;">o arrastra y suelta aquí</p>
                     </div>
@@ -242,7 +281,35 @@
                     <div class="image-preview" id="imagePreview"></div>
                 </div>
                 
-                <button type="submit" class="btn">💾 Guardar</button>
+                <!-- NUEVO: Checkbox para crear vehículo -->
+                <div class="checkbox-group" onclick="toggleVehiculoFields()">
+                    <input type="checkbox" id="crearVehiculo">
+                    <label for="crearVehiculo" style="cursor: pointer; margin: 0;">
+                        🚗 ¿Crear vehículo para este conductor?
+                    </label>
+                </div>
+                
+                <!-- NUEVO: Campos de vehículo (ocultos por defecto) -->
+                <div id="vehiculoFields" class="vehiculo-fields">
+                    <h3 style="margin-bottom: 15px; color: #667eea;">🚗 Datos del Vehículo</h3>
+                    
+                    <div class="form-group">
+                        <label>Placa del vehículo:</label>
+                        <input type="text" id="placaVehiculo" placeholder="Ej: ABC123" 
+                               style="text-transform: uppercase;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Modelo:</label>
+                        <input type="text" id="modeloVehiculo" placeholder="Ej: Pulsar 180">
+                    </div>
+                    
+                    <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                        💡 El vehículo se asignará automáticamente a este conductor
+                    </p>
+                </div>
+                
+                <button type="submit" class="btn">💾 Guardar Conductor</button>
             </form>
         </div>
     </div>
@@ -252,27 +319,21 @@
         
         document.addEventListener('DOMContentLoaded', cargarConductores);
         
-        // Drag and drop
-        const uploadArea = document.getElementById('uploadArea');
-        
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragging');
-        });
-        
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragging');
-        });
-        
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragging');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                document.getElementById('fotoInput').files = e.dataTransfer.files;
-                previewImage({files: [file]});
+        function toggleVehiculoFields() {
+            const checkbox = document.getElementById('crearVehiculo');
+            const fields = document.getElementById('vehiculoFields');
+            const placaInput = document.getElementById('placaVehiculo');
+            
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                fields.classList.add('active');
+                placaInput.required = true;
+            } else {
+                fields.classList.remove('active');
+                placaInput.required = false;
             }
-        });
+        }
         
         function previewImage(input) {
             const preview = document.getElementById('imagePreview');
@@ -301,17 +362,41 @@
                     return;
                 }
                 
-                grid.innerHTML = conductores.map(c => `
-                    <div class="conductor-card">
-                        ${c.foto_path 
-                            ? `<img src="${c.foto_path}" class="conductor-image" alt="${c.nombre}">`
-                            : '<div class="icon">🏍️</div>'
-                        }
-                        <h3>${c.nombre}</h3>
-                        <p><strong>Licencia:</strong> ${c.licencia || 'N/A'}</p>
-                        <p><strong>Estado:</strong> ${c.activo ? '✅ Activo' : '❌ Inactivo'}</p>
-                    </div>
-                `).join('');
+                grid.innerHTML = conductores.map(c => {
+                    // Mostrar vehículos del conductor
+                    let vehiculosHTML = '';
+                    if (c.vehiculos && c.vehiculos.length > 0) {
+                        vehiculosHTML = `
+                            <div class="vehiculos-conductor">
+                                <strong>🚗 Vehículos (${c.vehiculos.length}):</strong>
+                                ${c.vehiculos.map(v => `
+                                    <div class="vehiculo-item">
+                                        🏍️ ${v.placa} - ${v.modelo || 'N/A'}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    } else {
+                        vehiculosHTML = `
+                            <div class="vehiculos-conductor">
+                                <small style="color: #999;">⚠️ Sin vehículos asignados</small>
+                            </div>
+                        `;
+                    }
+                    
+                    return `
+                        <div class="conductor-card">
+                            ${c.foto_path 
+                                ? `<img src="${c.foto_path}" class="conductor-image" alt="${c.nombre}">`
+                                : '<div class="icon">🏍️</div>'
+                            }
+                            <h3>${c.nombre}</h3>
+                            <p><strong>Licencia:</strong> ${c.licencia || 'N/A'}</p>
+                            <p><strong>Estado:</strong> ${c.activo ? '✅ Activo' : '❌ Inactivo'}</p>
+                            ${vehiculosHTML}
+                        </div>
+                    `;
+                }).join('');
             } catch (error) {
                 console.error('Error:', error);
             }
@@ -325,20 +410,32 @@
             document.getElementById('modalConductor').style.display = 'none';
             document.getElementById('formConductor').reset();
             document.getElementById('imagePreview').innerHTML = '';
+            document.getElementById('vehiculoFields').classList.remove('active');
             imagenSeleccionada = null;
         }
         
         async function crearConductor(event) {
             event.preventDefault();
-            const formData = new FormData(event.target);
+            
+            const crearVehiculo = document.getElementById('crearVehiculo').checked;
+            const placaVehiculo = document.getElementById('placaVehiculo').value;
+            
+            // Validar que si se marcó crear vehículo, tenga placa
+            if (crearVehiculo && !placaVehiculo) {
+                alert('⚠️ Por favor ingresa la placa del vehículo');
+                return;
+            }
             
             const conductor = {
-                nombre: formData.get('nombre'),
-                licencia: formData.get('licencia')
+                nombre: document.getElementById('nombre').value,
+                licencia: document.getElementById('licencia').value,
+                crear_vehiculo: crearVehiculo,
+                placa_vehiculo: crearVehiculo ? placaVehiculo.toUpperCase() : null,
+                modelo_vehiculo: crearVehiculo ? document.getElementById('modeloVehiculo').value : null
             };
             
             try {
-                // 1. Crear el conductor
+                // 1. Crear el conductor (con o sin vehículo)
                 const response = await fetch('/api/conductores/', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -359,15 +456,29 @@
                         });
                     }
                     
-                    alert('✅ Conductor creado exitosamente');
+                    let mensaje = '✅ Conductor creado exitosamente';
+                    if (crearVehiculo) {
+                        mensaje += `\n🚗 Vehículo ${placaVehiculo} asignado correctamente`;
+                    }
+                    
+                    alert(mensaje);
                     cerrarModal();
                     cargarConductores();
                 } else {
-                    alert('❌ Error al crear conductor');
+                    const error = await response.json();
+                    alert('❌ Error: ' + JSON.stringify(error));
                 }
             } catch (error) {
                 console.error('Error:', error);
                 alert('❌ Error al crear conductor');
+            }
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalConductor');
+            if (event.target == modal) {
+                cerrarModal();
             }
         }
     </script>
