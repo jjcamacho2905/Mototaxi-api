@@ -29,6 +29,10 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 UPLOAD_DIR = Path("app/static/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
+# 🔧 WORKAROUND PARA EL ERROR DE UNICODE EN FASTAPI
+# Esto evita el UnicodeDecodeError al manejar bytes no válidos en errores de validación
+from fastapi.encoders import ENCODERS_BY_TYPE
+ENCODERS_BY_TYPE[bytes] = lambda o: o.decode('utf-8', errors='ignore')
 
 # ============================================
 # 🔐 LOGIN & REGISTRO
@@ -132,40 +136,19 @@ def nuevo_usuario_form(request: Request):
 
 
 @app.post("/usuarios/nuevo", tags=["Usuarios HTML"])
-async def crear_usuario_html(
-    request: Request,
-    nombre: str = Form(...),
-    telefono: str = Form(...),
-    contrasena: str = Form(...),
-    foto: UploadFile = File(None),  # ← NUEVO: imagen opcional
-    db: Session = Depends(get_db)
-):
-    """Crear usuario desde formulario HTML con foto"""
-    
-    # Crear usuario
+def crear_usuario_html(request: Request,
+                       nombre: str = Form(...),
+                       telefono: str = Form(...),
+                       contrasena: str = Form(...),
+                       db: Session = Depends(get_db)):
+
     nuevo = schemas.UsuarioCrear(
-        nombre=nombre,
-        telefono=telefono,
-        contrasena=contrasena
+        nombre=nombre, telefono=telefono, contrasena=contrasena
     )
-    usuario_creado = crud.crear_usuario(db, nuevo)
-    
-    # Subir foto si existe
-    if foto and foto.filename:
-        if foto.content_type.startswith("image/"):
-            extension = foto.filename.split(".")[-1]
-            filename = f"usuario_{usuario_creado.id}_{uuid.uuid4()}.{extension}"
-            filepath = UPLOAD_DIR / filename
-            
-            with open(filepath, "wb") as buffer:
-                shutil.copyfileobj(foto.file, buffer)
-            
-            usuario_creado.foto_path = f"/static/uploads/{filename}"
-            db.commit()
-    
+    crud.crear_usuario(db, nuevo)
+
     return templates.TemplateResponse(
-        "usuario_ok.html",
-        {"request": request, "nombre": nombre}
+        "usuario_ok.html", {"request": request, "nombre": nombre}
     )
     
 @app.get("/viajes", tags=["Páginas HTML"])
@@ -482,8 +465,3 @@ def info():
             "vehiculos": "/vehiculos"
         }
     }
-
-
-
-
-

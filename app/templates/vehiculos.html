@@ -72,14 +72,10 @@
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s;
         }
         
         .btn:hover {
             background: #45a049;
-            transform: translateY(-2px);
         }
         
         .vehiculos-grid {
@@ -106,7 +102,6 @@
             object-fit: cover;
             border-radius: 10px;
             margin-bottom: 15px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
         
         .vehiculo-card .icon {
@@ -123,16 +118,6 @@
             font-weight: bold;
         }
         
-        .vehiculo-info {
-            margin-bottom: 10px;
-        }
-        
-        .vehiculo-info strong {
-            color: #666;
-            display: inline-block;
-            width: 80px;
-        }
-        
         .badge {
             display: inline-block;
             padding: 5px 15px;
@@ -147,11 +132,6 @@
             color: #155724;
         }
         
-        .badge.inactivo {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
         .card-actions {
             display: flex;
             gap: 10px;
@@ -162,26 +142,23 @@
             padding: 8px 15px;
             font-size: 14px;
             flex: 1;
-            text-align: center;
-        }
-        
-        .btn-danger {
-            background: #f44336;
-        }
-        
-        .btn-danger:hover {
-            background: #da190b;
         }
         
         .btn-warning {
             background: #ff9800;
         }
         
-        .btn-warning:hover {
-            background: #e68900;
+        .btn-danger {
+            background: #f44336;
         }
         
-        /* Modal */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -191,7 +168,6 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
-            overflow-y: auto;
         }
         
         .modal-content {
@@ -203,11 +179,6 @@
             max-width: 500px;
         }
         
-        .modal h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-        }
-        
         .form-group {
             margin-bottom: 20px;
         }
@@ -215,7 +186,6 @@
         .form-group label {
             display: block;
             margin-bottom: 5px;
-            color: #555;
             font-weight: bold;
         }
         
@@ -229,53 +199,7 @@
         .close {
             float: right;
             font-size: 28px;
-            font-weight: bold;
             cursor: pointer;
-            color: #999;
-        }
-        
-        .close:hover {
-            color: #333;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: white;
-            font-size: 18px;
-        }
-        
-        /* Upload area */
-        .upload-area {
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #fafafa;
-        }
-        
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #f9f9ff;
-        }
-        
-        .upload-area.dragging {
-            border-color: #4CAF50;
-            background: #f0fff4;
-        }
-        
-        .image-preview {
-            margin-top: 10px;
-            text-align: center;
-        }
-        
-        .image-preview img {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: 10px;
-            border: 2px solid #ddd;
         }
     </style>
 </head>
@@ -289,13 +213,13 @@
                 <a href="/conductores">🏍️ Conductores</a>
                 <a href="/vehiculos">🚗 Vehículos</a>
                 <a href="/viajes">🚖 Viajes</a>
-                <a href="/buscar">🔍 Buscar</a>
                 <a href="/">🚪 Salir</a>
             </nav>
         </header>
         
         <div class="actions">
             <button class="btn" onclick="abrirModal()">➕ Nuevo Vehículo</button>
+            <button class="btn" onclick="cargarVehiculos()" style="background: #2196F3; margin-left: 10px;">🔄 Recargar</button>
         </div>
         
         <div id="vehiculosGrid" class="vehiculos-grid">
@@ -303,138 +227,81 @@
         </div>
     </div>
     
-    <!-- Modal para crear vehículo -->
     <div id="modalVehiculo" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
             <h2>➕ Nuevo Vehículo</h2>
             <form id="formVehiculo" onsubmit="crearVehiculo(event)">
                 <div class="form-group">
-                    <label for="placa">Placa:</label>
-                    <input type="text" id="placa" name="placa" placeholder="ABC123" required 
-                           pattern="[A-Z0-9]{6}" title="6 caracteres (letras y números)">
+                    <label>Placa:</label>
+                    <input type="text" id="placa" required>
                 </div>
-                
                 <div class="form-group">
-                    <label for="modelo">Modelo:</label>
-                    <input type="text" id="modelo" name="modelo" placeholder="Yamaha FZ 150" required>
+                    <label>Modelo:</label>
+                    <input type="text" id="modelo" required>
                 </div>
-                
                 <div class="form-group">
-                    <label>Foto del vehículo:</label>
-                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fotoInput').click()">
-                        <p>🚗 Click para seleccionar imagen</p>
-                        <p style="font-size: 12px; color: #999;">o arrastra y suelta aquí</p>
-                    </div>
-                    <input type="file" id="fotoInput" accept="image/*" style="display: none;" onchange="previewImage(this)">
-                    <div class="image-preview" id="imagePreview"></div>
+                    <label>Foto (opcional):</label>
+                    <input type="file" id="foto" accept="image/*">
                 </div>
-                
-                <button type="submit" class="btn">💾 Guardar Vehículo</button>
+                <button type="submit" class="btn">💾 Guardar</button>
             </form>
         </div>
     </div>
     
     <script>
-        let imagenSeleccionada = null;
+        console.log('✅ Script cargado');
         
-        // Cargar vehículos al iniciar
-        document.addEventListener('DOMContentLoaded', () => {
-            cargarVehiculos();
-        });
-        
-        // Drag and drop para upload
-        const uploadArea = document.getElementById('uploadArea');
-        
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragging');
-        });
-        
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragging');
-        });
-        
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragging');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                document.getElementById('fotoInput').files = e.dataTransfer.files;
-                previewImage({files: [file]});
-            }
-        });
-        
-        function previewImage(input) {
-            const preview = document.getElementById('imagePreview');
-            
-            if (input.files && input.files[0]) {
-                imagenSeleccionada = input.files[0];
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-                };
-                
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
+        // Cargar al inicio
+        window.onload = function() {
+            console.log('✅ Página cargada');
+            setTimeout(cargarVehiculos, 100);
+        };
         
         async function cargarVehiculos() {
+            console.log('🔄 Iniciando carga...');
+            const grid = document.getElementById('vehiculosGrid');
+            
             try {
                 const response = await fetch('/api/vehiculos/');
-                const vehiculos = await response.json();
+                console.log('Response:', response.status);
                 
-                const grid = document.getElementById('vehiculosGrid');
+                const vehiculos = await response.json();
+                console.log('Vehículos:', vehiculos);
                 
                 if (vehiculos.length === 0) {
-                    grid.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; color: white; padding: 40px;">
-                            <h2>No hay vehículos registrados</h2>
-                            <p>Haz clic en "Nuevo Vehículo" para agregar uno</p>
-                        </div>
-                    `;
+                    grid.innerHTML = '<div style="color:white; grid-column: 1/-1; text-align: center; padding: 40px;"><h2>No hay vehículos</h2></div>';
                     return;
                 }
                 
-                grid.innerHTML = vehiculos.map(vehiculo => `
-                    <div class="vehiculo-card">
-                        ${vehiculo.foto_path 
-                            ? `<img src="${vehiculo.foto_path}" class="vehiculo-image" alt="${vehiculo.placa}">`
-                            : '<div class="icon">🏍️</div>'
-                        }
-                        <h3>${vehiculo.placa}</h3>
-                        
-                        <div class="vehiculo-info">
-                            <strong>ID:</strong> ${vehiculo.id}
+                let html = '';
+                for (let v of vehiculos) {
+                    html += `
+                        <div class="vehiculo-card">
+                            ${v.foto_path ? 
+                                `<img src="${v.foto_path}" class="vehiculo-image">` :
+                                '<div class="icon">🏍️</div>'
+                            }
+                            <h3>${v.placa}</h3>
+                            <p><strong>Modelo:</strong> ${v.modelo}</p>
+                            <span class="badge activo">✅ Activo</span>
+                            <div class="card-actions">
+                                <button class="btn btn-small btn-warning" onclick="inactivar(${v.id})">⏸️</button>
+                                <button class="btn btn-small btn-danger" onclick="eliminar(${v.id})">🗑️</button>
+                            </div>
                         </div>
-                        
-                        <div class="vehiculo-info">
-                            <strong>Modelo:</strong> ${vehiculo.modelo || 'N/A'}
-                        </div>
-                        
-                        <span class="badge ${vehiculo.activo ? 'activo' : 'inactivo'}">
-                            ${vehiculo.activo ? '✅ Activo' : '❌ Inactivo'}
-                        </span>
-                        
-                        <div class="card-actions">
-                            ${vehiculo.activo ? `
-                                <button class="btn btn-small btn-warning" onclick="inactivarVehiculo(${vehiculo.id})">
-                                    ⏸️ Inactivar
-                                </button>
-                            ` : ''}
-                            <button class="btn btn-small btn-danger" onclick="eliminarVehiculo(${vehiculo.id})">
-                                🗑️ Eliminar
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }
+                
+                grid.innerHTML = html;
+                console.log('✅ Grid actualizado');
                 
             } catch (error) {
-                console.error('Error cargando vehículos:', error);
-                document.getElementById('vehiculosGrid').innerHTML = `
-                    <div style="color: white; text-align: center; grid-column: 1/-1;">
-                        ❌ Error al cargar vehículos
+                console.error('❌ Error:', error);
+                grid.innerHTML = `
+                    <div style="color:white; grid-column: 1/-1; text-align: center; padding: 40px;">
+                        <h2>❌ Error: ${error.message}</h2>
+                        <button class="btn" onclick="cargarVehiculos()">🔄 Reintentar</button>
                     </div>
                 `;
             }
@@ -447,101 +314,56 @@
         function cerrarModal() {
             document.getElementById('modalVehiculo').style.display = 'none';
             document.getElementById('formVehiculo').reset();
-            document.getElementById('imagePreview').innerHTML = '';
-            imagenSeleccionada = null;
         }
         
-        async function crearVehiculo(event) {
-            event.preventDefault();
+        async function crearVehiculo(e) {
+            e.preventDefault();
             
-            const formData = new FormData(event.target);
             const vehiculo = {
-                placa: formData.get('placa').toUpperCase(),
-                modelo: formData.get('modelo')
+                placa: document.getElementById('placa').value.toUpperCase(),
+                modelo: document.getElementById('modelo').value
             };
             
             try {
-                // 1. Crear el vehículo
-                const response = await fetch('/api/vehiculos/', {
+                const res = await fetch('/api/vehiculos/', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(vehiculo)
                 });
                 
-                if (response.ok) {
-                    const vehiculoCreado = await response.json();
+                if (res.ok) {
+                    const created = await res.json();
                     
-                    // 2. Subir la imagen si existe
-                    if (imagenSeleccionada) {
-                        const formDataImagen = new FormData();
-                        formDataImagen.append('file', imagenSeleccionada);
-                        
-                        await fetch(`/api/upload/vehiculo/${vehiculoCreado.id}`, {
+                    // Subir foto si existe
+                    const foto = document.getElementById('foto').files[0];
+                    if (foto) {
+                        const fd = new FormData();
+                        fd.append('file', foto);
+                        await fetch(`/api/upload/vehiculo/${created.id}`, {
                             method: 'POST',
-                            body: formDataImagen
+                            body: fd
                         });
                     }
                     
-                    alert('✅ Vehículo creado exitosamente');
+                    alert('✅ Vehículo creado');
                     cerrarModal();
-                    cargarVehiculos();
-                } else {
-                    alert('❌ Error al crear vehículo');
+                    setTimeout(cargarVehiculos, 500);
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert('❌ Error al crear vehículo');
+                alert('❌ Error: ' + error.message);
             }
         }
         
-        async function inactivarVehiculo(id) {
-            if (!confirm('¿Estás seguro de inactivar este vehículo?')) return;
-            
-            try {
-                const response = await fetch(`/api/vehiculos/${id}/inactivar`, {
-                    method: 'PATCH'
-                });
-                
-                if (response.ok) {
-                    alert('✅ Vehículo inactivado');
-                    cargarVehiculos();
-                } else {
-                    alert('❌ Error al inactivar vehículo');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('❌ Error al inactivar vehículo');
+        async function eliminar(id) {
+            if (confirm('¿Eliminar vehículo?')) {
+                await fetch(`/api/vehiculos/${id}`, {method: 'DELETE'});
+                cargarVehiculos();
             }
         }
         
-        async function eliminarVehiculo(id) {
-            if (!confirm('¿Estás seguro de eliminar este vehículo? Esta acción no se puede deshacer.')) return;
-            
-            try {
-                const response = await fetch(`/api/vehiculos/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    alert('✅ Vehículo eliminado');
-                    cargarVehiculos();
-                } else {
-                    alert('❌ Error al eliminar vehículo');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('❌ Error al eliminar vehículo');
-            }
-        }
-        
-        // Cerrar modal al hacer clic fuera
-        window.onclick = function(event) {
-            const modal = document.getElementById('modalVehiculo');
-            if (event.target == modal) {
-                cerrarModal();
-            }
+        async function inactivar(id) {
+            await fetch(`/api/vehiculos/${id}/inactivar`, {method: 'PATCH'});
+            cargarVehiculos();
         }
     </script>
 </body>
