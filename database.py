@@ -1,23 +1,20 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-# DATOS DE CLEVER CLOUD
-DB_HOST = "bcjw...postgresql.services.clever-cloud.com"
-DB_NAME = "bcjw...f5r82mu"
-DB_USER = "ufrqizsynh7hwlwkypI"
-DB_PASS = "TU_PASSWORD"
-DB_PORT = "50013"
+# URL de conexión a PostgreSQL usando los datos de Clever Cloud
+DATABASE_URL = "postgresql://ufrqizsynh7hw1lwkypl:TDIEkb5nDrOF8Ow4SVacVAicm8bjb8@bcjwxq3t9ckvbf5r82mu-postgresql.services.clever-cloud.com:50013/bcjwxq3t9ckvbf5r82mu"
 
-SQLALCHEMY_DATABASE_URL = (
-    f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
+# Crear el motor de la base de datos
+engine = create_engine(DATABASE_URL, connect_args={"sslmode": "require"})  # Habilitar SSL si es necesario
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
+# Crear una sesión local para interactuar con la base de datos
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Base para definir los modelos
 Base = declarative_base()
 
+# Función para obtener la sesión de la base de datos
 def get_db():
     db = SessionLocal()
     try:
