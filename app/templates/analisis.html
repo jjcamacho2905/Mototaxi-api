@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Análisis de Datos - Mototaxi Supatá</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .navbar {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .navbar a {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .recomendaciones {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .recomendacion {
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #4CAF50;
+            background: #f0f9ff;
+            border-radius: 5px;
+        }
+        
+        .calculadora {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .resultado-tarifa {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Análisis de Datos Históricos</h1>
+            <nav class="navbar">
+                <a href="/dashboard">🏠 Dashboard</a>
+                <a href="/analisis">📊 Análisis</a>
+                <a href="/viajes">🚖 Viajes</a>
+                <a href="/">🚪 Salir</a>
+            </nav>
+        </header>
+        
+        <!-- ESTADÍSTICAS GENERALES -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="icon">🗺️</div>
+                <h3>Rutas Históricas</h3>
+                <div class="value" id="totalRutas">0</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="icon">🚖</div>
+                <h3>Viajes Históricos</h3>
+                <div class="value" id="viajesHistoricos">0</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="icon">💰</div>
+                <h3>Tarifa Promedio</h3>
+                <div class="value" id="tarifaPromedio">$0</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="icon">📍</div>
+                <h3>Distancia Promedio</h3>
+                <div class="value" id="distanciaPromedio">0 km</div>
+            </div>
+        </div>
+        
+        <!-- CALCULADORA DE TARIFAS -->
+        <div class="calculadora">
+            <h2>🧮 Calculadora de Tarifas Inteligente</h2>
+            <p>Obtén sugerencias de precio basadas en datos históricos</p>
+            
+            <div class="form-group">
+                <label>Origen:</label>
+                <select id="origen">
+                    <option value="">Selecciona origen...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Destino:</label>
+                <select id="destino">
+                    <option value="">Selecciona destino...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Distancia (km) - Opcional:</label>
+                <input type="number" id="distancia" placeholder="Solo si la ruta es nueva">
+            </div>
+            
+            <button class="btn" onclick="calcularTarifa()">💡 Calcular Tarifa Sugerida</button>
+            
+            <div id="resultadoTarifa" class="resultado-tarifa">
+                <h3>💰 Resultado:</h3>
+                <div id="tarifaInfo"></div>
+            </div>
+        </div>
+        
+        <!-- RECOMENDACIONES -->
+        <div class="recomendaciones" id="recomendacionesDiv">
+            <h2>💡 Recomendaciones Inteligentes</h2>
+            <div id="listaRecomendaciones"></div>
+        </div>
+        
+        <!-- GRÁFICAS -->
+        <div class="chart-card">
+            <h2>📈 Top 5 Rutas Más Populares</h2>
+            <canvas id="chartRutasPopulares"></canvas>
+        </div>
+        
+        <div class="chart-card">
+            <h2>💵 Comparación de Tarifas por Ruta</h2>
+            <canvas id="chartTarifas"></canvas>
+        </div>
+        
+        <div class="chart-card">
+            <h2>🔄 Comparativo: Sistema vs. Histórico</h2>
+            <canvas id="chartComparativo"></canvas>
+        </div>
+    </div>
+    
+    <script>
+        let rutasHistoricas = [];
+        let lugares = new Set();
+        
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', async () => {
+            await cargarEstadisticas();
+            await cargarRutasHistoricas();
+            await cargarRecomendaciones();
+            await cargarGraficas();
+        });
+        
+        async function cargarEstadisticas() {
+            const response = await fetch('/api/rutas/estadisticas');
+            const data = await response.json();
+            
+            document.getElementById('totalRutas').textContent = data.total_rutas;
+            document.getElementById('viajesHistoricos').textContent = data.total_viajes_historicos.toLocaleString();
+            document.getElementById('tarifaPromedio').textContent = `$${data.tarifa_promedio.toLocaleString()}`;
+            document.getElementById('distanciaPromedio').textContent = `${data.distancia_promedio_km} km`;
+        }
+        
+        async function cargarRutasHistoricas() {
+            const response = await fetch('/api/rutas/historicas');
+            const data = await response.json();
+            rutasHistoricas = data.rutas;
+            
+            // Extraer lugares únicos
+            rutasHistoricas.forEach(ruta => {
+                lugares.add(ruta.origen);
+                lugares.add(ruta.destino);
+            });
+            
+            // Llenar selectores
+            const origenSelect = document.getElementById('origen');
+            const destinoSelect = document.getElementById('destino');
+            
+            lugares.forEach(lugar => {
+                origenSelect.innerHTML += `<option value="${lugar}">${lugar}</option>`;
+                destinoSelect.innerHTML += `<option value="${lugar}">${lugar}</option>`;
+            });
+        }
+        
+        async function calcularTarifa() {
+            const origen = document.getElementById('origen').value;
+            const destino = document.getElementById('destino').value;
+            const distancia = document.getElementById('distancia').value;
+            
+            if (!origen || !destino) {
+                alert('Por favor selecciona origen y destino');
+                return;
+            }
+            
+            let url = `/api/rutas/sugerir-tarifa?origen=${encodeURIComponent(origen)}&destino=${encodeURIComponent(destino)}`;
+            if (distancia) {
+                url += `&distancia_km=${distancia}`;
+            }
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            const resultadoDiv = document.getElementById('resultadoTarifa');
+            const infoDiv = document.getElementById('tarifaInfo');
+            
+            infoDiv.innerHTML = `
+                <h4>${data.origen} → ${data.destino}</h4>
+                <p><strong>💰 Tarifa Sugerida:</strong> $${data.tarifa_sugerida.toLocaleString()}</p>
+                <p><strong>📉 Mínimo:</strong> $${data.tarifa_minima.toLocaleString()}</p>
+                <p><strong>📈 Máximo:</strong> $${data.tarifa_maxima.toLocaleString()}</p>
+                ${data.tiempo_estimado ? `<p><strong>⏱️ Tiempo estimado:</strong> ${data.tiempo_estimado} min</p>` : ''}
+                <p><strong>📊 Basado en:</strong> ${
+                    data.basado_en === 'historico' ? 
+                    `Datos históricos (${data.viajes_historicos} viajes)` :
+                    data.basado_en === 'calculo' ?
+                    'Cálculo por distancia' :
+                    'Valor por defecto'
+                }</p>
+            `;
+            
+            resultadoDiv.style.display = 'block';
+        }
+        
+        async function cargarRecomendaciones() {
+            const response = await fetch('/api/analisis/recomendaciones');
+            const data = await response.json();
+            
+            const lista = document.getElementById('listaRecomendaciones');
+            
+            if (data.total_recomendaciones === 0) {
+                lista.innerHTML = '<p>No hay recomendaciones disponibles por ahora.</p>';
+                return;
+            }
+            
+            lista.innerHTML = data.recomendaciones.map(rec => `
+                <div class="recomendacion">
+                    <h4>${rec.tipo === 'ruta_popular' ? '🔥' : rec.tipo === 'oportunidad' ? '💡' : '💰'} ${rec.tipo.toUpperCase()}</h4>
+                    <p><strong>${rec.mensaje}</strong></p>
+                    <p>✅ ${rec.accion}</p>
+                </div>
+            `).join('');
+        }
+        
+        async function cargarGraficas() {
+            // Gráfica 1: Rutas populares
+            const responsePop = await fetch('/api/rutas/populares?top=5');
+            const rutasPop = await responsePop.json();
+            
+            new Chart(document.getElementById('chartRutasPopulares'), {
+                type: 'bar',
+                data: {
+                    labels: rutasPop.rutas.map(r => `${r.origen} → ${r.destino}`),
+                    datasets: [{
+                        label: 'Viajes Históricos',
+                        data: rutasPop.rutas.map(r => r.viajes_historicos),
+                        backgroundColor: '#667eea'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true
+                }
+            });
+            
+            // Gráfica 2: Tarifas
+            new Chart(document.getElementById('chartTarifas'), {
+                type: 'bar',
+                data: {
+                    labels: rutasPop.rutas.map(r => `${r.origen.substring(0, 15)}...`),
+                    datasets: [
+                        {
+                            label: 'Tarifa Base',
+                            data: rutasPop.rutas.map(r => r.tarifa_base),
+                            backgroundColor: '#4CAF50'
+                        },
+                        {
+                            label: 'Tarifa Máxima',
+                            data: rutasPop.rutas.map(r => r.tarifa_maxima),
+                            backgroundColor: '#FF9800'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+            
+            // Gráfica 3: Comparativo
+            const responseComp = await fetch('/api/analisis/comparativo');
+            const comp = await responseComp.json();
+            
+            new Chart(document.getElementById('chartComparativo'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Precio Promedio Sistema', 'Tarifa Promedio Histórica'],
+                    datasets: [{
+                        data: [
+                            comp.viajes_sistema.precio_promedio,
+                            comp.datos_historicos.tarifa_promedio
+                        ],
+                        backgroundColor: ['#667eea', '#764ba2']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

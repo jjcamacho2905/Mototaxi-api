@@ -447,6 +447,8 @@ def buscar_global(q: str, db: Session = Depends(get_db)):
     return resultados
 
 
+
+
 # ============================================
 # ℹ️ INFO API
 # ============================================
