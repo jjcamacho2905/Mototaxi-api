@@ -432,4 +432,45 @@ def obtener_vehiculos_de_conductor(conductor_id: int, db: Session = Depends(get_
     }
 
 
-# ... (resto del código permanece igual)
+# ============================================
+# 🔍 SECCIÓN: BÚSQUEDA GLOBAL
+# ============================================
+
+@app.get("/buscar", tags=["Búsqueda"])
+def buscar_page(request: Request):
+    """Página de búsqueda"""
+    return templates.TemplateResponse("buscar.html", {"request": request})
+
+
+@app.get("/api/buscar", tags=["Búsqueda"])
+def buscar_global(q: str, db: Session = Depends(get_db)):
+    """Búsqueda global"""
+    if not q or len(q.strip()) < 2:
+        raise HTTPException(400, "Escribe al menos 2 caracteres")
+    
+    query = q.strip()
+    
+    # Buscar usuarios
+    usuarios = db.query(models.Usuario).filter(
+        (models.Usuario.nombre.ilike(f"%{query}%")) | 
+        (models.Usuario.telefono.ilike(f"%{query}%"))
+    ).filter(models.Usuario.activo == True).all()
+    
+    # Buscar conductores
+    conductores = db.query(models.Conductor).filter(
+        models.Conductor.nombre.ilike(f"%{query}%")
+    ).filter(models.Conductor.activo == True).all()
+    
+    # Buscar vehículos
+    vehiculos = db.query(models.Vehiculo).filter(
+        models.Vehiculo.placa.ilike(f"%{query}%")
+    ).filter(models.Vehiculo.activo == True).all()
+    
+    total = len(usuarios) + len(conductores) + len(vehiculos)
+    
+    return {
+        "usuarios": usuarios,
+        "conductores": conductores,
+        "vehiculos": vehiculos,
+        "total": total
+    }

@@ -75,6 +75,18 @@ class ViajeBase(BaseModel):
 class ViajeCrear(ViajeBase):
     pass
 
+class ViajeActualizar(BaseModel):
+    """Schema para actualizar solo el estado de un viaje"""
+    estado: str
+    
+    @field_validator('estado')
+    @classmethod
+    def validar_estado(cls, v):
+        estados_validos = ['pendiente', 'en_curso', 'completado', 'cancelado']
+        if v not in estados_validos:
+            raise ValueError(f"Estado debe ser uno de: {', '.join(estados_validos)}")
+        return v
+
 class Viaje(ViajeBase):
     id: int
     activo: bool
