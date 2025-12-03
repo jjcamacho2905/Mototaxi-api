@@ -89,6 +89,20 @@
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .conductor-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .conductor-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            background: #f0f0f0;
         }
         
         .conductor-card .icon {
@@ -112,6 +126,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
+            overflow-y: auto;
         }
         
         .modal-content {
@@ -145,6 +160,38 @@
             font-size: 28px;
             cursor: pointer;
         }
+        
+        /* Preview de imagen */
+        .image-preview {
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+        }
+        
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f9f9ff;
+        }
+        
+        .upload-area.dragging {
+            border-color: #4CAF50;
+            background: #f0fff4;
+        }
     </style>
 </head>
 <body>
@@ -156,6 +203,7 @@
                 <a href="/usuarios">👥 Usuarios</a>
                 <a href="/conductores">🏍️ Conductores</a>
                 <a href="/vehiculos">🚗 Vehículos</a>
+                <a href="/viajes">🚖 Viajes</a>
                 <a href="/">🚪 Salir</a>
             </nav>
         </header>
@@ -178,17 +226,68 @@
                     <label>Nombre:</label>
                     <input type="text" name="nombre" required>
                 </div>
+                
                 <div class="form-group">
                     <label>Licencia:</label>
                     <input type="text" name="licencia" required>
                 </div>
+                
+                <div class="form-group">
+                    <label>Foto del conductor:</label>
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fotoInput').click()">
+                        <p>📷 Click para seleccionar imagen</p>
+                        <p style="font-size: 12px; color: #999;">o arrastra y suelta aquí</p>
+                    </div>
+                    <input type="file" id="fotoInput" accept="image/*" style="display: none;" onchange="previewImage(this)">
+                    <div class="image-preview" id="imagePreview"></div>
+                </div>
+                
                 <button type="submit" class="btn">💾 Guardar</button>
             </form>
         </div>
     </div>
     
     <script>
+        let imagenSeleccionada = null;
+        
         document.addEventListener('DOMContentLoaded', cargarConductores);
+        
+        // Drag and drop
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragging');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragging');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragging');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                document.getElementById('fotoInput').files = e.dataTransfer.files;
+                previewImage({files: [file]});
+            }
+        });
+        
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            
+            if (input.files && input.files[0]) {
+                imagenSeleccionada = input.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                };
+                
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
         
         async function cargarConductores() {
             try {
@@ -204,7 +303,10 @@
                 
                 grid.innerHTML = conductores.map(c => `
                     <div class="conductor-card">
-                        <div class="icon">🏍️</div>
+                        ${c.foto_path 
+                            ? `<img src="${c.foto_path}" class="conductor-image" alt="${c.nombre}">`
+                            : '<div class="icon">🏍️</div>'
+                        }
                         <h3>${c.nombre}</h3>
                         <p><strong>Licencia:</strong> ${c.licencia || 'N/A'}</p>
                         <p><strong>Estado:</strong> ${c.activo ? '✅ Activo' : '❌ Inactivo'}</p>
@@ -221,17 +323,22 @@
         
         function cerrarModal() {
             document.getElementById('modalConductor').style.display = 'none';
+            document.getElementById('formConductor').reset();
+            document.getElementById('imagePreview').innerHTML = '';
+            imagenSeleccionada = null;
         }
         
         async function crearConductor(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
+            
             const conductor = {
                 nombre: formData.get('nombre'),
                 licencia: formData.get('licencia')
             };
             
             try {
+                // 1. Crear el conductor
                 const response = await fetch('/api/conductores/', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -239,11 +346,27 @@
                 });
                 
                 if (response.ok) {
-                    alert('✅ Conductor creado');
+                    const conductorCreado = await response.json();
+                    
+                    // 2. Subir la imagen si existe
+                    if (imagenSeleccionada) {
+                        const formDataImagen = new FormData();
+                        formDataImagen.append('file', imagenSeleccionada);
+                        
+                        await fetch(`/api/upload/conductor/${conductorCreado.id}`, {
+                            method: 'POST',
+                            body: formDataImagen
+                        });
+                    }
+                    
+                    alert('✅ Conductor creado exitosamente');
                     cerrarModal();
                     cargarConductores();
+                } else {
+                    alert('❌ Error al crear conductor');
                 }
             } catch (error) {
+                console.error('Error:', error);
                 alert('❌ Error al crear conductor');
             }
         }

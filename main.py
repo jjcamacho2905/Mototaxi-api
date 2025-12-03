@@ -132,19 +132,40 @@ def nuevo_usuario_form(request: Request):
 
 
 @app.post("/usuarios/nuevo", tags=["Usuarios HTML"])
-def crear_usuario_html(request: Request,
-                       nombre: str = Form(...),
-                       telefono: str = Form(...),
-                       contrasena: str = Form(...),
-                       db: Session = Depends(get_db)):
-
+async def crear_usuario_html(
+    request: Request,
+    nombre: str = Form(...),
+    telefono: str = Form(...),
+    contrasena: str = Form(...),
+    foto: UploadFile = File(None),  # ← NUEVO: imagen opcional
+    db: Session = Depends(get_db)
+):
+    """Crear usuario desde formulario HTML con foto"""
+    
+    # Crear usuario
     nuevo = schemas.UsuarioCrear(
-        nombre=nombre, telefono=telefono, contrasena=contrasena
+        nombre=nombre,
+        telefono=telefono,
+        contrasena=contrasena
     )
-    crud.crear_usuario(db, nuevo)
-
+    usuario_creado = crud.crear_usuario(db, nuevo)
+    
+    # Subir foto si existe
+    if foto and foto.filename:
+        if foto.content_type.startswith("image/"):
+            extension = foto.filename.split(".")[-1]
+            filename = f"usuario_{usuario_creado.id}_{uuid.uuid4()}.{extension}"
+            filepath = UPLOAD_DIR / filename
+            
+            with open(filepath, "wb") as buffer:
+                shutil.copyfileobj(foto.file, buffer)
+            
+            usuario_creado.foto_path = f"/static/uploads/{filename}"
+            db.commit()
+    
     return templates.TemplateResponse(
-        "usuario_ok.html", {"request": request, "nombre": nombre}
+        "usuario_ok.html",
+        {"request": request, "nombre": nombre}
     )
     
 @app.get("/viajes", tags=["Páginas HTML"])
