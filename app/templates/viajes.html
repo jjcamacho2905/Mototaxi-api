@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚖 Viajes - Mototaxi Supatá</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .navbar {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .navbar a {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .navbar a:hover {
+            background: #5568d3;
+        }
+        
+        .actions {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background: #45a049;
+        }
+        
+        .btn-filter {
+            background: #2196F3;
+        }
+        
+        .btn-filter:hover {
+            background: #0b7dda;
+        }
+        
+        /* GRID DE VIAJES */
+        .viajes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .viaje-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .viaje-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .viaje-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .viaje-id {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .viaje-info {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .viaje-info .icon {
+            font-size: 20px;
+            width: 30px;
+        }
+        
+        .viaje-precio {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4CAF50;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .viaje-fecha {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge.disponible {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge.ocupado {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge.activo {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .badge.inactivo {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* INDICADOR DE ESTADO */
+        .estado-conductor {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .estado-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .estado-dot.libre {
+            background: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .estado-dot.ocupado {
+            background: #FF9800;
+            box-shadow: 0 0 10px #FF9800;
+        }
+        
+        .estado-dot.inactivo {
+            background: #F44336;
+        }
+        
+        /* SELECTOR DE CONDUCTOR MEJORADO */
+        .conductor-option {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        
+        .conductor-option:hover {
+            background: #f5f5f5;
+        }
+        
+        .info-adicional {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-adicional h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .info-adicional ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .info-adicional li {
+            padding: 5px 0;
+            color: #666;
+        }
+        
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+        }
+        
+        .modal h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close:hover {
+            color: #333;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .route {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        
+        .route .arrow {
+            font-size: 24px;
+            color: #667eea;
+        }
+        
+        .route .location {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        /* FILTROS */
+        .filters {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .filters select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚖 Gestión de Viajes</h1>
+            <nav class="navbar">
+                <a href="/dashboard">🏠 Dashboard</a>
+                <a href="/usuarios">👥 Usuarios</a>
+                <a href="/conductores">🏍️ Conductores</a>
+                <a href="/vehiculos">🚗 Vehículos</a>
+                <a href="/viajes">🚖 Viajes</a>
+                <a href="/buscar">🔍 Buscar</a>
+                <a href="/">🚪 Salir</a>
+            </nav>
+        </header>
+        
+        <div class="actions">
+            <button class="btn" onclick="abrirModal()">➕ Nuevo Viaje</button>
+            <button class="btn btn-filter" onclick="mostrarConductoresDisponibles()">👀 Ver Conductores Disponibles</button>
+            
+            <div class="filters">
+                <label>Filtrar por estado:</label>
+                <select id="filtroEstado" onchange="filtrarViajes()">
+                    <option value="todos">Todos</option>
+                    <option value="pendiente">Pendientes</option>
+                    <option value="en_curso">En Curso</option>
+                    <option value="completado">Completados</option>
+                    <option value="cancelado">Cancelados</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- PANEL DE CONDUCTORES DISPONIBLES -->
+        <div id="panelConductores" style="display: none; background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: #667eea;">🏍️ Estado de Conductores</h2>
+                <button class="btn" style="background: #f44336;" onclick="cerrarPanelConductores()">✖ Cerrar</button>
+            </div>
+            <div id="listaConductores" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+            </div>
+        </div>
+        
+        <div id="viajesGrid" class="viajes-grid">
+            <div class="loading">⏳ Cargando viajes...</div>
+        </div>
+    </div>
+    
+    <!-- MODAL PARA CREAR VIAJE -->
+    <div id="modalViaje" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2>➕ Nuevo Viaje</h2>
+            <form id="formViaje" onsubmit="crearViaje(event)">
+                <div class="form-group">
+                    <label for="usuario_id">👤 Usuario:</label>
+                    <select id="usuario_id" name="usuario_id" required>
+                        <option value="">Seleccione un usuario...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="conductor_id">🏍️ Conductor:</label>
+                    <select id="conductor_id" name="conductor_id" required>
+                        <option value="">Seleccione un conductor...</option>
+                    </select>
+                    <div id="estadoConductor" style="margin-top: 10px; padding: 10px; border-radius: 5px; display: none;"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vehiculo_id">🚗 Vehículo:</label>
+                    <select id="vehiculo_id" name="vehiculo_id" required>
+                        <option value="">Seleccione un vehículo...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="origen">📍 Origen:</label>
+                    <input type="text" id="origen" name="origen" 
+                           placeholder="Ej: Centro de Supatá" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="destino">🎯 Destino:</label>
+                    <input type="text" id="destino" name="destino" 
+                           placeholder="Ej: Vereda La Palma" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="precio">💰 Precio (COP):</label>
+                    <input type="number" id="precio" name="precio" 
+                           placeholder="Ej: 5000" min="0" step="500" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="estado">📊 Estado:</label>
+                    <select id="estado" name="estado">
+                        <option value="pendiente">Pendiente</option>
+                        <option value="en_curso">En Curso</option>
+                        <option value="completado">Completado</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn">💾 Crear Viaje</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Variables globales
+        let todosLosViajes = [];
+        let usuarios = [];
+        let conductores = [];
+        let vehiculos = [];
+        let conductoresEstado = {}; // Nuevo: estado de cada conductor
+        
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', async () => {
+            await cargarTodosDatos();
+            await cargarViajes();
+        });
+        
+        // Cargar usuarios, conductores y vehículos
+        async function cargarTodosDatos() {
+            try {
+                // Cargar usuarios
+                const usuariosRes = await fetch('/api/usuarios/');
+                usuarios = await usuariosRes.json();
+                
+                const selectUsuarios = document.getElementById('usuario_id');
+                selectUsuarios.innerHTML = '<option value="">Seleccione un usuario...</option>';
+                usuarios.forEach(u => {
+                    if (u.activo) {
+                        selectUsuarios.innerHTML += `<option value="${u.id}">${u.nombre}</option>`;
+                    }
+                });
+                
+                // Cargar conductores
+                const conductoresRes = await fetch('/api/conductores/');
+                conductores = await conductoresRes.json();
+                
+                // Calcular estado de cada conductor
+                await calcularEstadoConductores();
+                
+                const selectConductores = document.getElementById('conductor_id');
+                selectConductores.innerHTML = '<option value="">Seleccione un conductor...</option>';
+                
+                conductores.forEach(c => {
+                    if (c.activo) {
+                        const estado = conductoresEstado[c.id];
+                        let emoji = '';
+                        let texto = '';
+                        
+                        if (estado === 'libre') {
+                            emoji = '✅';
+                            texto = 'LIBRE';
+                        } else if (estado === 'ocupado') {
+                            emoji = '⏳';
+                            texto = 'OCUPADO';
+                        } else {
+                            emoji = '❌';
+                            texto = 'INACTIVO';
+                        }
+                        
+                        selectConductores.innerHTML += 
+                            `<option value="${c.id}" data-estado="${estado}">
+                                ${emoji} ${c.nombre} - ${texto}
+                            </option>`;
+                    }
+                });
+                
+                // Listener para mostrar info del conductor
+                selectConductores.addEventListener('change', mostrarInfoConductor);
+                
+                // Cargar vehículos
+                const vehiculosRes = await fetch('/api/vehiculos/');
+                vehiculos = await vehiculosRes.json();
+                
+                const selectVehiculos = document.getElementById('vehiculo_id');
+                selectVehiculos.innerHTML = '<option value="">Seleccione un vehículo...</option>';
+                vehiculos.forEach(v => {
+                    if (v.activo) {
+                        selectVehiculos.innerHTML += `<option value="${v.id}">${v.placa} - ${v.modelo || 'N/A'}</option>`;
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                alert('Error al cargar datos. Verifica que existan usuarios, conductores y vehículos.');
+            }
+        }
+        
+        // Calcular estado de cada conductor
+        async function calcularEstadoConductores() {
+            conductoresEstado = {};
+            
+            // Por cada conductor, verificar si tiene viajes en curso
+            conductores.forEach(conductor => {
+                if (!conductor.activo) {
+                    conductoresEstado[conductor.id] = 'inactivo';
+                    return;
+                }
+                
+                // Buscar si tiene viajes en curso o pendientes
+                const viajeActivo = todosLosViajes.find(v => 
+                    v.conductor_id === conductor.id && 
+                    (v.estado === 'en_curso' || v.estado === 'pendiente')
+                );
+                
+                if (viajeActivo) {
+                    conductoresEstado[conductor.id] = 'ocupado';
+                } else {
+                    conductoresEstado[conductor.id] = 'libre';
+                }
+            });
+        }
+        
+        // Mostrar información del conductor seleccionado
+        function mostrarInfoConductor() {
+            const selectConductor = document.getElementById('conductor_id');
+            const conductorId = parseInt(selectConductor.value);
+            const infoDiv = document.getElementById('estadoConductor');
+            
+            if (!conductorId) {
+                infoDiv.style.display = 'none';
+                return;
+            }
+            
+            const conductor = conductores.find(c => c.id === conductorId);
+            const estado = conductoresEstado[conductorId];
+            
+            // Contar viajes del conductor
+            const viajesConductor = todosLosViajes.filter(v => v.conductor_id === conductorId);
+            const completados = viajesConductor.filter(v => v.estado === 'completado').length;
+            const enCurso = viajesConductor.filter(v => v.estado === 'en_curso').length;
+            const pendientes = viajesConductor.filter(v => v.estado === 'pendiente').length;
+            
+            // Calcular ingresos generados
+            const ingresos = viajesConductor.reduce((sum, v) => sum + (v.precio || 0), 0);
+            
+            let html = '';
+            let bgColor = '';
+            let emoji = '';
+            let mensaje = '';
+            
+            if (estado === 'libre') {
+                bgColor = '#d4edda';
+                emoji = '✅';
+                mensaje = `<strong>${conductor.nombre}</strong> está LIBRE y disponible para asignar`;
+            } else if (estado === 'ocupado') {
+                bgColor = '#fff3cd';
+                emoji = '⏳';
+                mensaje = `<strong>${conductor.nombre}</strong> está OCUPADO con ${enCurso} viaje(s) en curso`;
+            } else {
+                bgColor = '#f8d7da';
+                emoji = '❌';
+                mensaje = `<strong>${conductor.nombre}</strong> está INACTIVO`;
+            }
+            
+            html = `
+                <div style="background: ${bgColor}; padding: 15px; border-radius: 5px;">
+                    <div style="font-size: 16px; margin-bottom: 10px;">
+                        <span style="font-size: 24px;">${emoji}</span>
+                        ${mensaje}
+                    </div>
+                    <div class="info-adicional" style="background: white; margin-top: 10px;">
+                        <h4>📊 Estadísticas del conductor:</h4>
+                        <ul style="list-style: none; padding: 0;">
+                            <li>🚖 <strong>Total viajes:</strong> ${viajesConductor.length}</li>
+                            <li>✅ <strong>Completados:</strong> ${completados}</li>
+                            <li>⏳ <strong>En curso:</strong> ${enCurso}</li>
+                            <li>📋 <strong>Pendientes:</strong> ${pendientes}</li>
+                            <li>💰 <strong>Ingresos generados:</strong> ${ingresos.toLocaleString('es-CO')}</li>
+                            <li>🆔 <strong>Licencia:</strong> ${conductor.licencia || 'N/A'}</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            infoDiv.innerHTML = html;
+            infoDiv.style.display = 'block';
+        }
+        async function cargarViajes() {
+            try {
+                const response = await fetch('/api/viajes/');
+                todosLosViajes = await response.json();
+                
+                // Ordenar por fecha más reciente
+                todosLosViajes.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+                
+                mostrarViajes(todosLosViajes);
+                
+            } catch (error) {
+                console.error('Error cargando viajes:', error);
+                document.getElementById('viajesGrid').innerHTML = 
+                    '<div style="color: white; text-align: center; grid-column: 1/-1;">❌ Error al cargar viajes</div>';
+            }
+        }
+        
+        // Mostrar viajes en el grid
+        function mostrarViajes(viajes) {
+            const grid = document.getElementById('viajesGrid');
+            
+            if (viajes.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; color: white; padding: 40px;">
+                        <h2>No hay viajes registrados</h2>
+                        <p>Haz clic en "Nuevo Viaje" para crear uno</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = viajes.map(viaje => {
+                const fecha = new Date(viaje.fecha);
+                const fechaFormato = fecha.toLocaleDateString('es-CO', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                // Buscar nombres
+                const usuario = usuarios.find(u => u.id === viaje.usuario_id);
+                const conductor = conductores.find(c => c.id === viaje.conductor_id);
+                const vehiculo = vehiculos.find(v => v.id === viaje.vehiculo_id);
+                
+                return `
+                    <div class="viaje-card">
+                        <div class="viaje-header">
+                            <div class="viaje-id">🚖 #${viaje.id}</div>
+                            <span class="badge ${viaje.estado}">${viaje.estado.toUpperCase()}</span>
+                        </div>
+                        
+                        <div class="route">
+                            <span class="location">📍 ${viaje.origen || 'N/A'}</span>
+                            <span class="arrow">→</span>
+                            <span class="location">🎯 ${viaje.destino || 'N/A'}</span>
+                        </div>
+                        
+                        <div class="viaje-precio">$${(viaje.precio || 0).toLocaleString('es-CO')}</div>
+                        
+                        <div class="viaje-info">
+                            <span class="icon">👤</span>
+                            <span>${usuario ? usuario.nombre : 'Usuario #' + viaje.usuario_id}</span>
+                        </div>
+                        
+                        <div class="viaje-info">
+                            <span class="icon">🏍️</span>
+                            <span>${conductor ? conductor.nombre : 'Conductor #' + viaje.conductor_id}</span>
+                        </div>
+                        
+                        <div class="viaje-info">
+                            <span class="icon">🚗</span>
+                            <span>${vehiculo ? vehiculo.placa : 'Vehículo #' + viaje.vehiculo_id}</span>
+                        </div>
+                        
+                        <div class="viaje-fecha">🕐 ${fechaFormato}</div>
+                        
+                        <button class="btn" style="width: 100%; margin-top: 10px; background: #f44336;" 
+                                onclick="eliminarViaje(${viaje.id})">
+                            🗑️ Eliminar
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Filtrar viajes por estado
+        function filtrarViajes() {
+            const filtro = document.getElementById('filtroEstado').value;
+            
+            if (filtro === 'todos') {
+                mostrarViajes(todosLosViajes);
+            } else {
+                const filtrados = todosLosViajes.filter(v => v.estado === filtro);
+                mostrarViajes(filtrados);
+            }
+        }
+        
+        // Abrir modal
+        function abrirModal() {
+            document.getElementById('modalViaje').style.display = 'block';
+            // Recalcular estado de conductores al abrir el modal
+            calcularEstadoConductores();
+            cargarTodosDatos(); // Recargar selectores con estado actualizado
+        }
+        
+        // Cerrar modal
+        function cerrarModal() {
+            document.getElementById('modalViaje').style.display = 'none';
+            document.getElementById('formViaje').reset();
+        }
+        
+        // Crear viaje
+        async function crearViaje(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const conductorId = parseInt(formData.get('conductor_id'));
+            
+            // Validar que el conductor esté libre
+            const estadoConductor = conductoresEstado[conductorId];
+            
+            if (estadoConductor === 'ocupado') {
+                const confirmar = confirm(
+                    '⚠️ ADVERTENCIA: Este conductor está OCUPADO con otro viaje.\n\n' +
+                    '¿Estás seguro de asignarle otro viaje?\n\n' +
+                    'Recomendación: Selecciona un conductor LIBRE (✅)'
+                );
+                
+                if (!confirmar) {
+                    return; // Cancelar la creación
+                }
+            }
+            
+            if (estadoConductor === 'inactivo') {
+                alert('❌ No puedes asignar un conductor INACTIVO');
+                return;
+            }
+            
+            const viaje = {
+                usuario_id: parseInt(formData.get('usuario_id')),
+                conductor_id: conductorId,
+                vehiculo_id: parseInt(formData.get('vehiculo_id')),
+                origen: formData.get('origen'),
+                destino: formData.get('destino'),
+                precio: parseFloat(formData.get('precio')),
+                estado: formData.get('estado'),
+                fecha: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch('/api/viajes/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(viaje)
+                });
+                
+                if (response.ok) {
+                    const viaje = await response.json();
+                    alert(`✅ Viaje #${viaje.id} creado exitosamente`);
+                    cerrarModal();
+                    await cargarViajes();
+                } else {
+                    const error = await response.json();
+                    alert('❌ Error al crear viaje: ' + JSON.stringify(error));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al crear viaje');
+            }
+        }
+        
+        // Eliminar viaje
+        async function eliminarViaje(id) {
+            if (!confirm('¿Estás seguro de eliminar este viaje?')) return;
+            
+            try {
+                const response = await fetch(`/api/viajes/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('✅ Viaje eliminado');
+                    await cargarViajes();
+                } else {
+                    alert('❌ Error al eliminar viaje');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al eliminar viaje');
+            }
+        }
+        
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalViaje');
+            if (event.target == modal) {
+                cerrarModal();
+            }
+        }
+        
+        // Mostrar panel de conductores disponibles
+        function mostrarConductoresDisponibles() {
+            const panel = document.getElementById('panelConductores');
+            const lista = document.getElementById('listaConductores');
+            
+            panel.style.display = 'block';
+            
+            // Generar cards de conductores
+            lista.innerHTML = conductores
+                .filter(c => c.activo)
+                .map(conductor => {
+                    const estado = conductoresEstado[conductor.id];
+                    const viajesConductor = todosLosViajes.filter(v => v.conductor_id === conductor.id);
+                    const completados = viajesConductor.filter(v => v.estado === 'completado').length;
+                    const enCurso = viajesConductor.filter(v => v.estado === 'en_curso').length;
+                    const ingresos = viajesConductor.reduce((sum, v) => sum + (v.precio || 0), 0);
+                    
+                    let bgColor, emoji, estadoTexto, borderColor;
+                    
+                    if (estado === 'libre') {
+                        bgColor = '#d4edda';
+                        borderColor = '#4CAF50';
+                        emoji = '✅';
+                        estadoTexto = 'LIBRE';
+                    } else if (estado === 'ocupado') {
+                        bgColor = '#fff3cd';
+                        borderColor = '#FF9800';
+                        emoji = '⏳';
+                        estadoTexto = 'OCUPADO';
+                    } else {
+                        bgColor = '#f8d7da';
+                        borderColor = '#F44336';
+                        emoji = '❌';
+                        estadoTexto = 'INACTIVO';
+                    }
+                    
+                    return `
+                        <div style="background: white; border: 3px solid ${borderColor}; padding: 15px; border-radius: 10px;">
+                            <div style="text-align: center; margin-bottom: 10px;">
+                                <div style="font-size: 48px; margin-bottom: 5px;">${emoji}</div>
+                                <h3 style="color: #333; margin-bottom: 5px;">${conductor.nombre}</h3>
+                                <div style="background: ${bgColor}; padding: 5px 15px; border-radius: 15px; display: inline-block; font-weight: bold;">
+                                    ${estadoTexto}
+                                </div>
+                            </div>
+                            
+                            <div style="border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px;">
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span>🆔 Licencia:</span>
+                                    <strong>${conductor.licencia || 'N/A'}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span>🚖 Total viajes:</span>
+                                    <strong>${viajesConductor.length}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span>✅ Completados:</span>
+                                    <strong>${completados}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span>⏳ En curso:</span>
+                                    <strong>${enCurso}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                                    <span>💰 Ingresos:</span>
+                                    <strong>${ingresos.toLocaleString('es-CO')}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+        }
+        
+        function cerrarPanelConductores() {
+            document.getElementById('panelConductores').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

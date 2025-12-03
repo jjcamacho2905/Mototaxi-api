@@ -21,33 +21,30 @@ app = FastAPI(
     description="Sistema de gestión de mototaxis con usuarios, conductores, vehículos y viajes"
 )
 
-# 📁 CONFIGURACIÓN DE TEMPLATES Y ARCHIVOS ESTÁTICOS
+# 📁 CONFIGURACIÓN DE TEMPLATES Y ESTÁTICOS
 templates = Jinja2Templates(directory="app/templates")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# 📸 CREAR CARPETA PARA UPLOADS DE IMÁGENES
+# 📸 CARPETA PARA UPLOADS
 UPLOAD_DIR = Path("app/static/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================
-# 🔐 SECCIÓN: LOGIN Y REGISTRO
+# 🔐 LOGIN & REGISTRO
 # ============================================
 
 @app.get("/", tags=["Autenticación"])
 def login_page(request: Request):
-    """Página de inicio de sesión"""
     return templates.TemplateResponse("login.html", {"request": request})
 
 
 @app.post("/login", tags=["Autenticación"])
-def login(
-    request: Request,
-    username: str = Form(...),
-    password: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    """Autenticar usuario y redirigir al dashboard"""
+def login(request: Request,
+          username: str = Form(...),
+          password: str = Form(...),
+          db: Session = Depends(get_db)):
+
     usuario = crud.autenticar_usuario(db, username, password)
 
     if not usuario:
@@ -56,13 +53,11 @@ def login(
             {"request": request, "error": "Usuario o contraseña incorrectos"}
         )
 
-    # Redirigir al dashboard después de login exitoso
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
 
 @app.get("/register", tags=["Autenticación"])
 def register_page(request: Request):
-    """Página de registro de nuevos usuarios"""
     return templates.TemplateResponse("register.html", {"request": request})
 
 
@@ -86,7 +81,7 @@ def register_user(
             {"request": request, "error": "El usuario ya existe"}
         )
     
-    # Crear nuevo usuario
+    # Crear nuevo usuario usando el schema correcto
     nuevo_usuario = schemas.UsuarioCrear(
         nombre=nombre,
         telefono=telefono,
@@ -101,160 +96,139 @@ def register_user(
 
 
 # ============================================
-# 📊 SECCIÓN: PÁGINAS HTML PRINCIPALES
+# 📊 PÁGINAS HTML
 # ============================================
 
 @app.get("/dashboard", tags=["Páginas HTML"])
 def dashboard_page(request: Request):
-    """Dashboard principal con estadísticas y gráficas"""
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
 
 @app.get("/conductores", tags=["Páginas HTML"])
 def conductores_page(request: Request):
-    """Página de gestión de conductores"""
     return templates.TemplateResponse("conductores.html", {"request": request})
 
 
 @app.get("/vehiculos", tags=["Páginas HTML"])
 def vehiculos_page(request: Request):
-    """Página de gestión de vehículos"""
     return templates.TemplateResponse("vehiculos.html", {"request": request})
 
 
 # ============================================
-# 👤 SECCIÓN: USUARIOS HTML
+# 👤 USUARIOS HTML
 # ============================================
 
 @app.get("/usuarios", tags=["Usuarios HTML"])
 def usuarios_html(request: Request, db: Session = Depends(get_db)):
-    """Listar todos los usuarios en HTML"""
     usuarios = db.query(models.Usuario).all()
     return templates.TemplateResponse(
-        "usuarios.html",
-        {"request": request, "usuarios": usuarios}
+        "usuarios.html", {"request": request, "usuarios": usuarios}
     )
 
 
 @app.get("/usuarios/nuevo", tags=["Usuarios HTML"])
 def nuevo_usuario_form(request: Request):
-    """Formulario para crear nuevo usuario"""
     return templates.TemplateResponse("usuario_form.html", {"request": request})
 
 
 @app.post("/usuarios/nuevo", tags=["Usuarios HTML"])
-def crear_usuario_html(
-    request: Request,
-    nombre: str = Form(...),
-    telefono: str = Form(...),
-    contrasena: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    """Crear usuario desde formulario HTML"""
+def crear_usuario_html(request: Request,
+                       nombre: str = Form(...),
+                       telefono: str = Form(...),
+                       contrasena: str = Form(...),
+                       db: Session = Depends(get_db)):
+
     nuevo = schemas.UsuarioCrear(
-        nombre=nombre,
-        telefono=telefono,
-        contrasena=contrasena
+        nombre=nombre, telefono=telefono, contrasena=contrasena
     )
     crud.crear_usuario(db, nuevo)
+
     return templates.TemplateResponse(
-        "usuario_ok.html",
-        {"request": request, "nombre": nombre}
+        "usuario_ok.html", {"request": request, "nombre": nombre}
     )
+    
+@app.get("/viajes", tags=["Páginas HTML"])
+def viajes_page(request: Request):
+    """Página de gestión de viajes"""
+    return templates.TemplateResponse("viajes.html", {"request": request})
 
 
 # ============================================
-# 👥 SECCIÓN: USUARIOS API
+# 👥 USUARIOS API
 # ============================================
 
 @app.get("/api/usuarios/", tags=["Usuarios API"])
 def listar_usuarios(db: Session = Depends(get_db)):
-    """Obtener lista de todos los usuarios"""
     return db.query(models.Usuario).all()
 
 
 @app.post("/api/usuarios/", tags=["Usuarios API"])
 def crear_usuario_api(usuario: schemas.UsuarioCrear, db: Session = Depends(get_db)):
-    """Crear un nuevo usuario vía API"""
     return crud.crear_usuario(db, usuario)
 
 
 @app.patch("/api/usuarios/{usuario_id}/inactivar", tags=["Usuarios API"])
 def inactivar_usuario(usuario_id: int, db: Session = Depends(get_db)):
-    """Inactivar un usuario (soft delete)"""
     usuario = crud.inactivar_usuario(db, usuario_id)
     if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return {
-        "mensaje": f"Usuario '{usuario.nombre}' inactivado correctamente",
-        "activo": usuario.activo
-    }
+        raise HTTPException(404, "Usuario no encontrado")
+    return {"mensaje": f"Usuario '{usuario.nombre}' inactivado", "activo": usuario.activo}
 
 
 @app.delete("/api/usuarios/{usuario_id}", tags=["Usuarios API"])
 def eliminar_usuario(usuario_id: int, db: Session = Depends(get_db)):
-    """Eliminar usuario permanentemente"""
     eliminado = crud.eliminar_usuario(db, usuario_id)
     if not eliminado:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(404, "Usuario no encontrado")
     return {"mensaje": "Usuario eliminado correctamente"}
 
 
 @app.get("/api/usuarios/estado/{activo}", tags=["Usuarios API"])
 def listar_usuarios_por_estado(activo: bool, db: Session = Depends(get_db)):
-    """Filtrar usuarios por estado (activo/inactivo)"""
     return crud.obtener_usuarios_por_estado(db, activo)
 
 
 @app.get("/api/usuarios/buscar/{nombre}", tags=["Usuarios API"])
 def buscar_usuario_por_nombre(nombre: str, db: Session = Depends(get_db)):
-    """Buscar usuarios por nombre"""
     usuarios = crud.buscar_usuario_por_nombre(db, nombre)
     if not usuarios:
-        raise HTTPException(status_code=404, detail="No se encontraron usuarios")
+        raise HTTPException(404, "No se encontraron usuarios")
     return usuarios
 
 
 # ============================================
-# 🏍️ SECCIÓN: CONDUCTORES API
+# 🏍️ CONDUCTORES API
+# (SIN CAMBIOS)
 # ============================================
 
 @app.get("/api/conductores/", tags=["Conductores API"])
 def listar_conductores(db: Session = Depends(get_db)):
-    """Obtener lista de todos los conductores"""
     return crud.obtener_conductores(db)
 
 
 @app.post("/api/conductores/", tags=["Conductores API"])
 def crear_conductor(conductor: schemas.ConductorCrear, db: Session = Depends(get_db)):
-    """Crear un nuevo conductor"""
     return crud.crear_conductor(db, conductor)
 
 
 @app.patch("/api/conductores/{conductor_id}/inactivar", tags=["Conductores API"])
 def inactivar_conductor(conductor_id: int, db: Session = Depends(get_db)):
-    """Inactivar un conductor"""
     conductor = crud.inactivar_conductor(db, conductor_id)
     if not conductor:
-        raise HTTPException(status_code=404, detail="Conductor no encontrado")
-    return {
-        "mensaje": f"Conductor '{conductor.nombre}' inactivado correctamente",
-        "activo": conductor.activo
-    }
+        raise HTTPException(404, "Conductor no encontrado")
+    return {"mensaje": f"Conductor '{conductor.nombre}' inactivado", "activo": conductor.activo}
 
 
 @app.get("/api/conductores/estado/{activo}", tags=["Conductores API"])
 def listar_conductores_por_estado(activo: bool, db: Session = Depends(get_db)):
-    """Filtrar conductores por estado"""
     return crud.obtener_conductores_por_estado(db, activo)
 
 
 @app.delete("/api/conductores/{conductor_id}", tags=["Conductores API"])
 def eliminar_conductor(conductor_id: int, db: Session = Depends(get_db)):
-    """Eliminar conductor permanentemente"""
     eliminado = crud.eliminar_conductor(db, conductor_id)
     if not eliminado:
-        raise HTTPException(status_code=404, detail="Conductor no encontrado")
+        raise HTTPException(404, "Conductor no encontrado")
     return {"mensaje": "Conductor eliminado correctamente"}
 
 
@@ -448,52 +422,47 @@ async def subir_foto_vehiculo(
 # 🔍 SECCIÓN: BÚSQUEDA GLOBAL
 # ============================================
 
+
 @app.get("/buscar", tags=["Búsqueda"])
 def buscar_page(request: Request, q: str = ""):
-    """Página de búsqueda global"""
-    return templates.TemplateResponse(
-        "buscar.html",
-        {"request": request, "query": q}
-    )
+    return templates.TemplateResponse("buscar.html", {"request": request, "query": q})
 
 
 @app.get("/api/buscar", tags=["Búsqueda"])
 def buscar_global(q: str, db: Session = Depends(get_db)):
-    """Buscar en usuarios, conductores y vehículos"""
     resultados = {
         "usuarios": crud.buscar_usuario_por_nombre(db, q),
-        "conductores": db.query(models.Conductor).filter(
-            models.Conductor.nombre.ilike(f"%{q}%")
-        ).all(),
-        "vehiculos": crud.buscar_vehiculo_por_placa(db, q),
-        "total": 0
+        "conductores": db.query(models.Conductor).filter(models.Conductor.nombre.ilike(f"%{q}%")).all(),
+        "vehiculos": crud.buscar_vehiculo_por_placa(db, q)
     }
-    
     resultados["total"] = (
-        len(resultados["usuarios"]) +
-        len(resultados["conductores"]) +
-        len(resultados["vehiculos"])
+        len(resultados["usuarios"])
+        + len(resultados["conductores"])
+        + len(resultados["vehiculos"])
     )
-    
     return resultados
 
 
 # ============================================
-# ℹ️ INFORMACIÓN DE LA API
+# ℹ️ INFO API
 # ============================================
 
 @app.get("/info", tags=["Información"])
 def info():
-    """Información general de la API"""
     return {
         "nombre": "API Mototaxi Supatá",
         "version": "1.0",
         "descripcion": "Sistema de gestión de mototaxis",
         "endpoints": {
-            "documentacion": "/docs",
+            "docs": "/docs",
             "dashboard": "/dashboard",
             "usuarios": "/usuarios",
             "conductores": "/conductores",
             "vehiculos": "/vehiculos"
         }
     }
+
+
+
+
+
