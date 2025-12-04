@@ -93,7 +93,7 @@
             margin-bottom: 10px;
         }
 
-        /* ===== LISTA DE USUARIOS ===== */
+        /* ===== SECCIÓN DE USUARIOS ===== */
         .usuarios-section {
             background: white;
             padding: 20px;
@@ -108,6 +108,31 @@
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .toggle-btn {
+            padding: 8px 16px;
+            background: #5c6bc0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn:hover {
+            background: #3f4aa3;
         }
 
         .usuarios-grid {
@@ -171,10 +196,53 @@
             color: #155724;
         }
 
+        .badge.inactivo {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .no-usuarios {
             text-align: center;
             padding: 40px;
             color: #999;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            flex: 1;
+            transition: all 0.2s;
+        }
+
+        .btn-reactivar {
+            background: #4CAF50;
+        }
+
+        .btn-reactivar:hover {
+            background: #45a049;
+        }
+
+        .btn-eliminar {
+            background: #f44336;
+        }
+
+        .btn-eliminar:hover {
+            background: #d32f2f;
+        }
+
+        .hidden {
+            display: none;
         }
 
         @media (max-width: 800px) {
@@ -250,48 +318,225 @@
 
     </div>
 
-    <!-- ===== LISTA DE USUARIOS ===== -->
+    <!-- ===== LISTA DE USUARIOS ACTIVOS ===== -->
     <div class="usuarios-section">
-        <h2>
-            <span>👥</span>
-            <span>Lista de Usuarios Activos</span>
-            <span style="margin-left: auto; font-size: 14px; font-weight: normal; color: #666;">
-                Total: {{ usuarios|length }}
-            </span>
-        </h2>
+        <div class="section-header">
+            <h2>
+                <span>👥</span>
+                <span>Usuarios Activos</span>
+                <span style="font-size: 14px; font-weight: normal; color: #666;">
+                    (Total: <span id="totalActivos">0</span>)
+                </span>
+            </h2>
+            <button class="toggle-btn" onclick="mostrarInactivos()">
+                📋 Ver Usuarios Inactivos
+            </button>
+        </div>
 
-        {% if usuarios %}
-        <div class="usuarios-grid">
-            {% for usuario in usuarios %}
-            <div class="usuario-card">
-                {% if usuario.foto_path %}
-                    <img src="{{ usuario.foto_path }}" alt="{{ usuario.nombre }}" class="usuario-foto">
-                {% else %}
-                    <div class="usuario-icon">👤</div>
-                {% endif %}
-                
-                <h3>{{ usuario.nombre }}</h3>
-                <p><strong>📱</strong> {{ usuario.telefono }}</p>
-                <p><strong>ID:</strong> #{{ usuario.id }}</p>
-                <span class="badge activo">✅ Activo</span>
-            </div>
-            {% endfor %}
+        <div id="usuariosActivosGrid" class="usuarios-grid">
+            <!-- Se llenará con JavaScript -->
         </div>
-        {% else %}
-        <div class="no-usuarios">
-            <p>No hay usuarios registrados</p>
-            <p><a href="/usuarios" style="color: #5c6bc0; text-decoration: none; font-weight: bold;">➕ Crear primer usuario</a></p>
+    </div>
+
+    <!-- ===== LISTA DE USUARIOS INACTIVOS ===== -->
+    <div class="usuarios-section hidden" id="seccionInactivos">
+        <div class="section-header">
+            <h2>
+                <span>❌</span>
+                <span>Usuarios Inactivos</span>
+                <span style="font-size: 14px; font-weight: normal; color: #666;">
+                    (Total: <span id="totalInactivos">0</span>)
+                </span>
+            </h2>
+            <button class="toggle-btn" onclick="ocultarInactivos()">
+                ⬆️ Ocultar Inactivos
+            </button>
         </div>
-        {% endif %}
+
+        <div id="usuariosInactivosGrid" class="usuarios-grid">
+            <!-- Se llenará con JavaScript -->
+        </div>
     </div>
 
 </div>
 
 <script>
+let usuariosActivos = [];
+let usuariosInactivos = [];
+
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarEstadisticas();
+    await cargarUsuarios();
     await cargarGraficas();
 });
+
+// ===== MOSTRAR/OCULTAR INACTIVOS =====
+function mostrarInactivos() {
+    document.getElementById('seccionInactivos').classList.remove('hidden');
+    window.scrollTo({
+        top: document.getElementById('seccionInactivos').offsetTop - 20,
+        behavior: 'smooth'
+    });
+}
+
+function ocultarInactivos() {
+    document.getElementById('seccionInactivos').classList.add('hidden');
+}
+
+// ===== CARGAR USUARIOS =====
+async function cargarUsuarios() {
+    try {
+        // Obtener usuarios activos
+        const resActivos = await fetch('/api/usuarios/estado/true');
+        usuariosActivos = await resActivos.json();
+        
+        // Obtener usuarios inactivos
+        const resInactivos = await fetch('/api/usuarios/estado/false');
+        usuariosInactivos = await resInactivos.json();
+        
+        // Actualizar contadores
+        document.getElementById('totalActivos').textContent = usuariosActivos.length;
+        document.getElementById('totalInactivos').textContent = usuariosInactivos.length;
+        
+        // Renderizar ambas listas
+        renderizarUsuariosActivos();
+        renderizarUsuariosInactivos();
+        
+    } catch (error) {
+        console.error('Error cargando usuarios:', error);
+    }
+}
+
+function renderizarUsuariosActivos() {
+    const grid = document.getElementById('usuariosActivosGrid');
+    
+    if (usuariosActivos.length === 0) {
+        grid.innerHTML = '<div class="no-usuarios">No hay usuarios activos</div>';
+        return;
+    }
+    
+    grid.innerHTML = usuariosActivos.map(usuario => `
+        <div class="usuario-card">
+            ${usuario.foto_path 
+                ? `<img src="${usuario.foto_path}" alt="${usuario.nombre}" class="usuario-foto">`
+                : '<div class="usuario-icon">👤</div>'
+            }
+            <h3>${usuario.nombre}</h3>
+            <p><strong>📱</strong> ${usuario.telefono}</p>
+            <p><strong>ID:</strong> #${usuario.id}</p>
+            <span class="badge activo">✅ Activo</span>
+            <div class="card-actions">
+                <button class="btn-small" style="background: #ff9800;" onclick="inactivarUsuario(${usuario.id}, '${usuario.nombre}')">
+                    ⏸️ Inactivar
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderizarUsuariosInactivos() {
+    const grid = document.getElementById('usuariosInactivosGrid');
+    
+    if (usuariosInactivos.length === 0) {
+        grid.innerHTML = '<div class="no-usuarios">No hay usuarios inactivos</div>';
+        return;
+    }
+    
+    grid.innerHTML = usuariosInactivos.map(usuario => `
+        <div class="usuario-card" style="opacity: 0.8;">
+            ${usuario.foto_path 
+                ? `<img src="${usuario.foto_path}" alt="${usuario.nombre}" class="usuario-foto" style="filter: grayscale(100%);">`
+                : '<div class="usuario-icon" style="opacity: 0.5;">👤</div>'
+            }
+            <h3>${usuario.nombre}</h3>
+            <p><strong>📱</strong> ${usuario.telefono}</p>
+            <p><strong>ID:</strong> #${usuario.id}</p>
+            <span class="badge inactivo">❌ Inactivo</span>
+            <div class="card-actions">
+                <button class="btn-small btn-reactivar" onclick="reactivarUsuario(${usuario.id}, '${usuario.nombre}')">
+                    ✅ Reactivar
+                </button>
+                <button class="btn-small btn-eliminar" onclick="eliminarUsuario(${usuario.id}, '${usuario.nombre}')">
+                    🗑️ Eliminar
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ===== ACCIONES DE USUARIOS =====
+async function inactivarUsuario(id, nombre) {
+    if (!confirm(`¿Inactivar al usuario "${nombre}"?`)) return;
+    
+    try {
+        const response = await fetch(`/api/usuarios/${id}/inactivar`, {
+            method: 'PATCH'
+        });
+        
+        if (response.ok) {
+            alert(`✅ Usuario "${nombre}" inactivado`);
+            await cargarUsuarios();
+            await cargarEstadisticas();
+        } else {
+            const error = await response.json();
+            alert(`❌ Error: ${error.detail}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error al inactivar usuario');
+    }
+}
+
+async function reactivarUsuario(id, nombre) {
+    if (!confirm(`¿Reactivar al usuario "${nombre}"?`)) return;
+    
+    try {
+        // Necesitamos crear un endpoint de reactivación en el backend
+        const response = await fetch(`/api/usuarios/${id}/reactivar`, {
+            method: 'PATCH'
+        });
+        
+        if (response.ok) {
+            alert(`✅ Usuario "${nombre}" reactivado`);
+            await cargarUsuarios();
+            await cargarEstadisticas();
+        } else {
+            const error = await response.json();
+            alert(`❌ Error: ${error.detail}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error al reactivar usuario');
+    }
+}
+
+async function eliminarUsuario(id, nombre) {
+    if (!confirm(`⚠️ ¿ELIMINAR PERMANENTEMENTE al usuario "${nombre}"?\n\nEsta acción NO se puede deshacer.`)) return;
+    
+    const confirmacion = prompt('Escribe "ELIMINAR" para confirmar:');
+    if (confirmacion !== 'ELIMINAR') {
+        alert('❌ Eliminación cancelada');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/usuarios/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            alert(`✅ Usuario "${nombre}" eliminado permanentemente`);
+            await cargarUsuarios();
+            await cargarEstadisticas();
+        } else {
+            const error = await response.json();
+            alert(`❌ Error: ${error.detail}`);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error al eliminar usuario');
+    }
+}
 
 // ===== ESTADÍSTICAS =====
 async function cargarEstadisticas() {
