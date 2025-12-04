@@ -210,15 +210,19 @@ def actualizar_foto_conductor(db: Session, conductor_id: int, foto_path: str):
 # ======================
 # 🚗 CRUD VEHÍCULOS
 # ======================
-def crear_vehiculo(db: Session, vehiculo: schemas.VehiculoCrear):
-    """Crea un nuevo vehículo"""
+def crear_vehiculo(db: Session, vehiculo: schemas.VehiculoCrear, conductor_id: int = None):
+    """Crea un vehículo y opcionalmente lo asigna a un conductor"""
     aplicar_reglas_vehiculo(db, vehiculo.placa, es_nuevo=True)
     placa_limpia = vehiculo.placa.strip().upper().replace("-", "").replace(" ", "")
+    
+    # Si se pasa conductor_id como parámetro, usarlo
+    # Si no, usar el que viene en el schema
+    final_conductor_id = conductor_id if conductor_id is not None else vehiculo.conductor_id
     
     nuevo_vehiculo = models.Vehiculo(
         placa=placa_limpia,
         modelo=vehiculo.modelo.strip() if vehiculo.modelo else None,
-        conductor_id=vehiculo.conductor_id if hasattr(vehiculo, 'conductor_id') else None,
+        conductor_id=final_conductor_id,
         activo=True
     )
     db.add(nuevo_vehiculo)

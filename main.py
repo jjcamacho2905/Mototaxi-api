@@ -7,12 +7,12 @@ from sqlalchemy.orm import Session
 from pathlib import Path
 import shutil
 import uuid
-import models, schemas, crud
 
+import models, schemas, crud
 from database import engine, get_db, Base
 
-# ⚙️ CREA LA BASE DE DATOS AUTOMÁTICAMENTE
-Base.metadata.create_all(bind=engine)
+# ❌ COMENTAR ESTA LÍNEA PARA NO CONECTAR AL INICIO
+# Base.metadata.create_all(bind=engine)
 
 # 🚀 INICIALIZAR FASTAPI
 app = FastAPI(
@@ -20,7 +20,6 @@ app = FastAPI(
     version="1.0",
     description="Sistema de gestión de mototaxis con usuarios, conductores, vehículos y viajes"
 )
-
 # 📁 CONFIGURACIÓN DE TEMPLATES Y ESTÁTICOS
 templates = Jinja2Templates(directory="app/templates")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -210,22 +209,20 @@ def listar_conductores(db: Session = Depends(get_db)):
 
 @app.post("/api/conductores/", tags=["Conductores API"])
 def crear_conductor(conductor: schemas.ConductorCrear, db: Session = Depends(get_db)):
-    # Si viene con datos de vehículo, crearlo también
-    if hasattr(conductor, 'crear_vehiculo') and conductor.crear_vehiculo:
-        # Crear conductor
-        nuevo_conductor = crud.crear_conductor(db, conductor)
-        
-        # Crear vehículo asociado
-        if conductor.placa_vehiculo:
-            vehiculo_data = schemas.VehiculoCrear(
-                placa=conductor.placa_vehiculo,
-                modelo=conductor.modelo_vehiculo
-            )
-            vehiculo = crud.crear_vehiculo(db, vehiculo_data, conductor_id=nuevo_conductor.id)
-        
-        return nuevo_conductor
+    """Crear un conductor y opcionalmente su vehículo"""
+    # Crear conductor
+    nuevo_conductor = crud.crear_conductor(db, conductor)
     
-    return crud.crear_conductor(db, conductor)
+    # Si pidió crear vehículo, crearlo
+    if conductor.crear_vehiculo and conductor.placa_vehiculo:
+        vehiculo_data = schemas.VehiculoCrear(
+            placa=conductor.placa_vehiculo,
+            modelo=conductor.modelo_vehiculo,
+            conductor_id=nuevo_conductor.id  # Asignar al conductor recién creado
+        )
+        vehiculo = crud.crear_vehiculo(db, vehiculo_data)
+    
+    return nuevo_conductor
 
 
 @app.patch("/api/conductores/{conductor_id}/inactivar", tags=["Conductores API"])
