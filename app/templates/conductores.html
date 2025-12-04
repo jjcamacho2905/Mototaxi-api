@@ -54,7 +54,7 @@
         
         .conductores-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 20px;
         }
         
@@ -62,6 +62,7 @@
             background: white;
             padding: 20px;
             border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
         .conductor-card img {
@@ -77,18 +78,101 @@
             text-align: center;
             margin-bottom: 10px;
         }
-        
-        .vehiculos-conductor {
-            background: #f5f5f5;
-            padding: 10px;
+
+        .conductor-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 20px;
+        }
+
+        .conductor-info {
+            margin: 8px 0;
+            padding: 8px;
+            background: #f8f9fa;
             border-radius: 5px;
-            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .conductor-info strong {
+            color: #667eea;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .badge.activo {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge.inactivo {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* ESTILOS PARA VEHÍCULOS */
+        .vehiculos-section {
+            margin-top: 15px;
+            padding: 12px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .vehiculos-section h4 {
+            color: #1565c0;
+            margin-bottom: 10px;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vehiculo-item {
+            background: white;
+            padding: 10px;
+            margin: 6px 0;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .vehiculo-item .vehiculo-info {
+            flex: 1;
+        }
+
+        .vehiculo-item .placa {
+            font-weight: bold;
+            color: #1565c0;
+            font-size: 16px;
+        }
+
+        .vehiculo-item .modelo {
+            color: #666;
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .sin-vehiculos {
+            color: #999;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
         }
         
         .card-actions {
             display: flex;
             gap: 5px;
-            margin-top: 10px;
+            margin-top: 15px;
         }
         
         .btn-small {
@@ -178,6 +262,12 @@
             margin-top: 10px;
             border-radius: 5px;
         }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -199,7 +289,7 @@
         </div>
         
         <div id="conductoresGrid" class="conductores-grid">
-            <p style="color: white; text-align: center;">⏳ Cargando...</p>
+            <p class="loading">⏳ Cargando conductores...</p>
         </div>
     </div>
     
@@ -297,8 +387,14 @@
         
         async function cargarConductores() {
             try {
-                const response = await fetch('/api/conductores/');
-                const conductores = await response.json();
+                // ✅ CARGAR CONDUCTORES Y VEHÍCULOS EN PARALELO
+                const [condResponse, vehResponse] = await Promise.all([
+                    fetch('/api/conductores/'),
+                    fetch('/api/vehiculos/')
+                ]);
+                
+                const conductores = await condResponse.json();
+                const todosVehiculos = await vehResponse.json();
                 
                 const grid = document.getElementById('conductoresGrid');
                 
@@ -307,21 +403,48 @@
                     return;
                 }
                 
+                // ✅ CREAR UN MAPA DE VEHÍCULOS POR CONDUCTOR
+                const vehiculosPorConductor = {};
+                todosVehiculos.forEach(v => {
+                    if (v.conductor_id) {
+                        if (!vehiculosPorConductor[v.conductor_id]) {
+                            vehiculosPorConductor[v.conductor_id] = [];
+                        }
+                        vehiculosPorConductor[v.conductor_id].push(v);
+                    }
+                });
+                
                 grid.innerHTML = conductores.map(c => {
+                    // Obtener vehículos de este conductor
+                    const vehiculos = vehiculosPorConductor[c.id] || [];
+                    
                     let vehiculosHTML = '';
-                    if (c.vehiculos && c.vehiculos.length > 0) {
+                    if (vehiculos.length > 0) {
                         vehiculosHTML = `
-                            <div class="vehiculos-conductor">
-                                <strong>🚗 Vehículos (${c.vehiculos.length}):</strong>
-                                ${c.vehiculos.map(v => `
-                                    <div style="margin:5px 0;">
-                                        🏍️ ${v.placa} - ${v.modelo || 'N/A'}
+                            <div class="vehiculos-section">
+                                <h4>🚗 Vehículos Asignados (${vehiculos.length})</h4>
+                                ${vehiculos.map(v => `
+                                    <div class="vehiculo-item">
+                                        <div class="vehiculo-info">
+                                            <div class="placa">🏍️ ${v.placa}</div>
+                                            <div class="modelo">${v.modelo || 'Sin modelo'}</div>
+                                        </div>
+                                        <span class="badge ${v.activo ? 'activo' : 'inactivo'}">
+                                            ${v.activo ? '✅' : '❌'}
+                                        </span>
                                     </div>
                                 `).join('')}
                             </div>
                         `;
                     } else {
-                        vehiculosHTML = '<small style="color:#999;">Sin vehículos</small>';
+                        vehiculosHTML = `
+                            <div class="vehiculos-section">
+                                <h4>🚗 Vehículos Asignados</h4>
+                                <div class="sin-vehiculos">
+                                    Sin vehículos asignados
+                                </div>
+                            </div>
+                        `;
                     }
                     
                     return `
@@ -331,17 +454,36 @@
                                 : '<div class="icon">🏍️</div>'
                             }
                             <h3>${c.nombre}</h3>
-                            <p><strong>Licencia:</strong> ${c.licencia || 'N/A'}</p>
-                            <p><strong>Estado:</strong> ${c.activo ? '✅ Activo' : '❌ Inactivo'}</p>
+                            
+                            <div class="conductor-info">
+                                <strong>🪪 Licencia:</strong> ${c.licencia || 'N/A'}
+                            </div>
+                            
+                            <div class="conductor-info">
+                                <strong>🆔 ID:</strong> ${c.id}
+                            </div>
+                            
+                            <div style="text-align: center;">
+                                <span class="badge ${c.activo ? 'activo' : 'inactivo'}">
+                                    ${c.activo ? '✅ Activo' : '❌ Inactivo'}
+                                </span>
+                            </div>
+                            
                             ${vehiculosHTML}
+                            
                             <div class="card-actions">
-                                <button class="btn-small btn-danger" onclick="eliminarConductor(${c.id})">🗑️ Eliminar</button>
+                                <button class="btn-small btn-danger" onclick="eliminarConductor(${c.id})">
+                                    🗑️ Eliminar
+                                </button>
                             </div>
                         </div>
                     `;
                 }).join('');
             } catch (error) {
                 console.error('Error:', error);
+                document.getElementById('conductoresGrid').innerHTML = `
+                    <p style="color: white;">❌ Error al cargar conductores: ${error.message}</p>
+                `;
             }
         }
         

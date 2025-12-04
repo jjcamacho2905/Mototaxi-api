@@ -28,7 +28,6 @@
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         
         header h1 {
@@ -315,6 +314,16 @@
             font-size: 13px;
             color: #0277bd;
         }
+        
+        .loading-message {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #856404;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -322,18 +331,18 @@
         <header>
             <h1>🚖 Gestión de Viajes</h1>
             <nav class="navbar">
-                <a href="/dashboard"> Dashboard</a>
-                <a href="/usuarios"> Usuarios</a>
-                <a href="/conductores"> Conductores</a>
-                <a href="/vehiculos"> Vehículos</a>
-                <a href="/viajes"> Viajes</a>
-                <a href="/buscar"> Buscar</a>
+                <a href="/dashboard">🏠 Dashboard</a>
+                <a href="/usuarios">👥 Usuarios</a>
+                <a href="/conductores">🏍️ Conductores</a>
+                <a href="/vehiculos">🚗 Vehículos</a>
+                <a href="/viajes">🚖 Viajes</a>
+                <a href="/buscar">🔍 Buscar</a>
                 <a href="/">🚪 Salir</a>
             </nav>
         </header>
         
         <div class="actions">
-            <button class="btn" onclick="abrirModal()"> Nuevo Viaje</button>
+            <button class="btn" onclick="abrirModal()">➕ Nuevo Viaje</button>
             
             <div class="filters">
                 <label>Filtrar por estado:</label>
@@ -348,31 +357,36 @@
         </div>
         
         <div id="viajesGrid" class="viajes-grid">
-            <div style="color: white; text-align: center;"> Cargando viajes...</div>
+            <div style="color: white; text-align: center;">⏳ Cargando viajes...</div>
         </div>
     </div>
     
     <div id="modalViaje" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
-            <h2> Nuevo Viaje</h2>
+            <h2>➕ Nuevo Viaje</h2>
+            
+            <div id="loadingMessage" class="loading-message" style="display: none;">
+                ⏳ Cargando datos...
+            </div>
+            
             <form id="formViaje" onsubmit="crearViaje(event)">
                 <div class="form-group">
-                    <label for="usuario_id"> Usuario:</label>
+                    <label for="usuario_id">👤 Usuario:</label>
                     <select id="usuario_id" required>
-                        <option value="">Seleccione un usuario...</option>
+                        <option value="">Cargando usuarios...</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="conductor_id"> Conductor:</label>
+                    <label for="conductor_id">🏍️ Conductor:</label>
                     <select id="conductor_id" required onchange="cargarVehiculosConductor()">
-                        <option value="">Seleccione un conductor...</option>
+                        <option value="">Cargando conductores...</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="vehiculo_id"> Vehículo:</label>
+                    <label for="vehiculo_id">🚗 Vehículo:</label>
                     <select id="vehiculo_id" required>
                         <option value="">Primero seleccione un conductor...</option>
                     </select>
@@ -380,21 +394,21 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="origen"> Origen:</label>
+                    <label for="origen">📍 Origen:</label>
                     <input type="text" id="origen" placeholder="Ej: Centro de Supatá" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="destino"> Destino:</label>
+                    <label for="destino">🎯 Destino:</label>
                     <input type="text" id="destino" placeholder="Ej: Vereda La Palma" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="precio"> Precio (COP):</label>
+                    <label for="precio">💰 Precio (COP):</label>
                     <input type="number" id="precio" placeholder="Ej: 5000" min="1000" step="100" required>
                 </div>
                 
-                <button type="submit" class="btn"> Crear Viaje</button>
+                <button type="submit" class="btn">💾 Crear Viaje</button>
             </form>
         </div>
     </div>
@@ -405,42 +419,98 @@
         let conductores = [];
         let vehiculos = [];
         
+        // ✅ CARGAR DATOS AL INICIAR LA PÁGINA
         document.addEventListener('DOMContentLoaded', async () => {
-            await cargarTodosDatos();
+            console.log('🚀 Página cargada, iniciando...');
             await cargarViajes();
         });
         
+        // ✅ FUNCIÓN PARA CARGAR TODOS LOS DATOS (usuarios, conductores, vehículos)
         async function cargarTodosDatos() {
+            const loadingMsg = document.getElementById('loadingMessage');
+            if (loadingMsg) loadingMsg.style.display = 'block';
+            
             try {
-                const [usuariosRes, conductoresRes, vehiculosRes] = await Promise.all([
-                    fetch('/api/usuarios/'),
-                    fetch('/api/conductores/'),
-                    fetch('/api/vehiculos/')
-                ]);
+                console.log('📥 Cargando usuarios, conductores y vehículos...');
                 
+                // Cargar usuarios
+                console.log('📥 Cargando usuarios...');
+                const usuariosRes = await fetch('/api/usuarios/');
+                if (!usuariosRes.ok) throw new Error(`Error ${usuariosRes.status} al cargar usuarios`);
                 usuarios = await usuariosRes.json();
+                console.log(`✅ ${usuarios.length} usuarios cargados`);
+                
+                // Cargar conductores
+                console.log('📥 Cargando conductores...');
+                const conductoresRes = await fetch('/api/conductores/');
+                if (!conductoresRes.ok) throw new Error(`Error ${conductoresRes.status} al cargar conductores`);
                 conductores = await conductoresRes.json();
+                console.log(`✅ ${conductores.length} conductores cargados`);
+                
+                // Cargar vehículos
+                console.log('📥 Cargando vehículos...');
+                const vehiculosRes = await fetch('/api/vehiculos/');
+                if (!vehiculosRes.ok) throw new Error(`Error ${vehiculosRes.status} al cargar vehículos`);
                 vehiculos = await vehiculosRes.json();
+                console.log(`✅ ${vehiculos.length} vehículos cargados`);
+                
+                console.log(`✅ Datos cargados:`, {
+                    usuarios: usuarios.length,
+                    conductores: conductores.length,
+                    vehiculos: vehiculos.length
+                });
                 
                 // Llenar selector de usuarios
                 const selectUsuarios = document.getElementById('usuario_id');
                 selectUsuarios.innerHTML = '<option value="">Seleccione un usuario...</option>';
-                usuarios.filter(u => u.activo).forEach(u => {
-                    selectUsuarios.innerHTML += `<option value="${u.id}">${u.nombre}</option>`;
-                });
+                
+                const usuariosActivos = usuarios.filter(u => u.activo);
+                console.log(`👥 Usuarios activos: ${usuariosActivos.length}`);
+                
+                if (usuariosActivos.length === 0) {
+                    selectUsuarios.innerHTML = '<option value="">No hay usuarios activos</option>';
+                } else {
+                    usuariosActivos.forEach(u => {
+                        selectUsuarios.innerHTML += `<option value="${u.id}">${u.nombre} - ${u.telefono}</option>`;
+                    });
+                }
                 
                 // Llenar selector de conductores
                 const selectConductores = document.getElementById('conductor_id');
                 selectConductores.innerHTML = '<option value="">Seleccione un conductor...</option>';
-                conductores.filter(c => c.activo).forEach(c => {
-                    selectConductores.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
-                });
+                
+                const conductoresActivos = conductores.filter(c => c.activo);
+                console.log(`🏍️ Conductores activos: ${conductoresActivos.length}`);
+                
+                if (conductoresActivos.length === 0) {
+                    selectConductores.innerHTML = '<option value="">No hay conductores activos</option>';
+                } else {
+                    conductoresActivos.forEach(c => {
+                        selectConductores.innerHTML += `<option value="${c.id}">${c.nombre}${c.licencia ? ' - Lic: ' + c.licencia : ''}</option>`;
+                    });
+                }
+                
+                if (loadingMsg) loadingMsg.style.display = 'none';
                 
             } catch (error) {
-                console.error('Error cargando datos:', error);
+                console.error('❌ Error cargando datos:', error);
+                
+                // Mostrar error detallado
+                const selectUsuarios = document.getElementById('usuario_id');
+                const selectConductores = document.getElementById('conductor_id');
+                const selectVehiculos = document.getElementById('vehiculo_id');
+                
+                selectUsuarios.innerHTML = '<option value="">❌ Error al cargar usuarios</option>';
+                selectConductores.innerHTML = '<option value="">❌ Error al cargar conductores</option>';
+                selectVehiculos.innerHTML = '<option value="">❌ Error al cargar vehículos</option>';
+                
+                alert(`❌ Error al cargar los datos:\n\n${error.message}\n\nAsegúrate de que:\n1. El servidor esté corriendo\n2. Los endpoints /api/usuarios/, /api/conductores/ y /api/vehiculos/ funcionen\n3. Haya datos en la base de datos`);
+                
+                if (loadingMsg) loadingMsg.style.display = 'none';
             }
         }
         
+        // ✅ CARGAR VEHÍCULOS DE UN CONDUCTOR
         async function cargarVehiculosConductor() {
             const conductorId = document.getElementById('conductor_id').value;
             const selectVehiculos = document.getElementById('vehiculo_id');
@@ -453,31 +523,36 @@
             }
             
             try {
-                // Obtener vehículos del conductor desde el endpoint específico
+                console.log(`🔍 Buscando vehículos del conductor ${conductorId}...`);
+                
                 const response = await fetch(`/api/vehiculos/conductor/${conductorId}`);
                 const data = await response.json();
                 const vehiculosConductor = data.vehiculos || [];
+                
+                console.log(`🚗 Vehículos encontrados: ${vehiculosConductor.length}`);
                 
                 selectVehiculos.innerHTML = '<option value="">Seleccione un vehículo...</option>';
                 
                 if (vehiculosConductor.length === 0) {
                     selectVehiculos.innerHTML = '<option value="">Este conductor no tiene vehículos asignados</option>';
-                    infoBox.textContent = '⚠️ Este conductor no tiene vehículos. Debe asignarle un vehículo primero en la sección de Vehículos o Conductores.';
+                    infoBox.textContent = '⚠️ Este conductor no tiene vehículos. Debe asignarle un vehículo primero.';
                     infoBox.style.display = 'block';
+                    infoBox.style.background = '#fff3cd';
+                    infoBox.style.color = '#856404';
                     return;
                 }
                 
                 vehiculosConductor.forEach(v => {
-                    selectVehiculos.innerHTML += `<option value="${v.id}">🚗 ${v.placa} - ${v.modelo || 'Sin modelo'}</option>`;
+                    selectVehiculos.innerHTML += `<option value="${v.id}">🚗 ${v.placa}${v.modelo ? ' - ' + v.modelo : ''}</option>`;
                 });
                 
-                infoBox.textContent = ` ${vehiculosConductor.length} vehículo(s) disponible(s) para este conductor`;
+                infoBox.textContent = `✅ ${vehiculosConductor.length} vehículo(s) disponible(s)`;
                 infoBox.style.display = 'block';
                 infoBox.style.background = '#d4edda';
                 infoBox.style.color = '#155724';
                 
             } catch (error) {
-                console.error('Error:', error);
+                console.error('❌ Error:', error);
                 selectVehiculos.innerHTML = '<option value="">Error al cargar vehículos</option>';
                 infoBox.textContent = '❌ Error al cargar los vehículos del conductor';
                 infoBox.style.display = 'block';
@@ -486,24 +561,30 @@
             }
         }
         
+        // ✅ CARGAR VIAJES
         async function cargarViajes() {
             try {
+                console.log('📥 Cargando viajes...');
                 const response = await fetch('/api/viajes/');
                 todosLosViajes = await response.json();
                 todosLosViajes.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+                console.log(`✅ ${todosLosViajes.length} viajes cargados`);
                 mostrarViajes(todosLosViajes);
             } catch (error) {
-                console.error('Error cargando viajes:', error);
+                console.error('❌ Error cargando viajes:', error);
+                document.getElementById('viajesGrid').innerHTML = '<div style="color: white; text-align: center;">❌ Error al cargar viajes</div>';
             }
         }
         
+        // ✅ MOSTRAR VIAJES EN LA INTERFAZ
         function mostrarViajes(viajes) {
             const grid = document.getElementById('viajesGrid');
             
             if (viajes.length === 0) {
                 grid.innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; color: white; padding: 40px;">
-                        <h2>No hay viajes registrados</h2>
+                        <h2>📭 No hay viajes registrados</h2>
+                        <p>Crea tu primer viaje para comenzar</p>
                     </div>
                 `;
                 return;
@@ -523,30 +604,29 @@
                 const conductor = conductores.find(c => c.id === viaje.conductor_id);
                 const vehiculo = vehiculos.find(v => v.id === viaje.vehiculo_id);
                 
-                // Botones según el estado
                 let botonesAccion = '';
                 if (viaje.estado === 'en_curso') {
                     botonesAccion = `
                         <button class="btn-completar" onclick="completarViaje(${viaje.id})">
-                             Completar Viaje
+                            ✅ Completar Viaje
                         </button>
                         <button class="btn-completar btn-cancelar" onclick="cancelarViaje(${viaje.id})">
-                             Cancelar
+                            ❌ Cancelar
                         </button>
                     `;
                 } else if (viaje.estado === 'pendiente') {
                     botonesAccion = `
                         <button class="btn-completar" onclick="iniciarViaje(${viaje.id})">
-                             Iniciar Viaje
+                            ▶️ Iniciar Viaje
                         </button>
                         <button class="btn-completar btn-cancelar" onclick="cancelarViaje(${viaje.id})">
-                             Cancelar
+                            ❌ Cancelar
                         </button>
                     `;
                 } else {
                     botonesAccion = `
                         <button class="btn-completar btn-eliminar" onclick="eliminarViaje(${viaje.id})">
-                             Eliminar
+                            🗑️ Eliminar
                         </button>
                     `;
                 }
@@ -559,9 +639,9 @@
                         </div>
                         
                         <div class="route">
-                            <span class="location"> ${viaje.origen || 'N/A'}</span>
+                            <span class="location">📍 ${viaje.origen || 'N/A'}</span>
                             <span class="arrow">→</span>
-                            <span class="location"> ${viaje.destino || 'N/A'}</span>
+                            <span class="location">🎯 ${viaje.destino || 'N/A'}</span>
                         </div>
                         
                         <div class="viaje-precio">$${(viaje.precio || 0).toLocaleString('es-CO')}</div>
@@ -602,8 +682,10 @@
             }
         }
         
-        function abrirModal() {
+        async function abrirModal() {
             document.getElementById('modalViaje').style.display = 'block';
+            // Cargar datos cuando se abre el modal
+            await cargarTodosDatos();
         }
         
         function cerrarModal() {
@@ -626,6 +708,8 @@
                 fecha: new Date().toISOString()
             };
             
+            console.log('📤 Creando viaje:', viaje);
+            
             try {
                 const response = await fetch('/api/viajes/', {
                     method: 'POST',
@@ -635,16 +719,18 @@
                 
                 if (response.ok) {
                     const viajeCreado = await response.json();
-                    alert(` Viaje #${viajeCreado.id} creado exitosamente`);
+                    console.log('✅ Viaje creado:', viajeCreado);
+                    alert(`✅ Viaje #${viajeCreado.id} creado exitosamente`);
                     cerrarModal();
                     await cargarViajes();
                 } else {
                     const error = await response.json();
-                    alert(' Error: ' + (error.detail || 'Error desconocido'));
+                    console.error('❌ Error del servidor:', error);
+                    alert('❌ Error: ' + (error.detail || 'Error desconocido'));
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert(' Error al crear viaje');
+                console.error('❌ Error:', error);
+                alert('❌ Error al crear viaje');
             }
         }
         
@@ -657,14 +743,14 @@
                 });
                 
                 if (response.ok) {
-                    alert(' Viaje completado. El conductor ahora está LIBRE');
+                    alert('✅ Viaje completado. El conductor ahora está LIBRE');
                     await cargarViajes();
                 } else {
-                    alert(' Error al completar viaje');
+                    alert('❌ Error al completar viaje');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert(' Error al completar viaje');
+                alert('❌ Error al completar viaje');
             }
         }
         
@@ -679,7 +765,7 @@
                 });
                 
                 if (response.ok) {
-                    alert(' Viaje iniciado');
+                    alert('✅ Viaje iniciado');
                     await cargarViajes();
                 }
             } catch (error) {
@@ -696,7 +782,7 @@
                 });
                 
                 if (response.ok) {
-                    alert(' Viaje cancelado. El conductor ahora está LIBRE');
+                    alert('✅ Viaje cancelado. El conductor ahora está LIBRE');
                     await cargarViajes();
                 }
             } catch (error) {
@@ -713,7 +799,7 @@
                 });
                 
                 if (response.ok) {
-                    alert(' Viaje eliminado');
+                    alert('✅ Viaje eliminado');
                     await cargarViajes();
                 }
             } catch (error) {
