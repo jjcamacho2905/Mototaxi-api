@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from pathlib import Path
 import shutil
 import uuid
-
 import models, schemas, crud
+
 from database import engine, get_db, Base
 
 # ⚙️ CREA LA BASE DE DATOS AUTOMÁTICAMENTE
@@ -79,14 +79,18 @@ def buscar_page(request: Request):
 # ============================================
 
 @app.get("/usuarios", tags=["Usuarios HTML"])
-def usuarios_html(request: Request):
-    """Formulario de creación de usuarios"""
-    return templates.TemplateResponse("usuario_form.html", {"request": request})
+def usuarios_lista(request: Request, db: Session = Depends(get_db)):
+    """Lista de usuarios (página principal)"""
+    usuarios = db.query(models.Usuario).filter(models.Usuario.activo == True).all()
+    return templates.TemplateResponse("Usuarios.html", {
+        "request": request,
+        "usuarios": usuarios
+    })
 
 
 @app.get("/usuarios/nuevo", tags=["Usuarios HTML"])
 def nuevo_usuario_form(request: Request):
-    """Alias para formulario de usuarios"""
+    """Formulario para crear nuevo usuario"""
     return templates.TemplateResponse("usuario_form.html", {"request": request})
 
 
@@ -95,7 +99,7 @@ async def crear_usuario_html(
     request: Request,
     nombre: str = Form(...),
     telefono: str = Form(...),
-    foto: UploadFile = File(...),  # Foto OBLIGATORIA
+    foto: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
     """Crear usuario desde formulario HTML con foto obligatoria"""
@@ -105,19 +109,21 @@ async def crear_usuario_html(
         raise HTTPException(400, "El archivo debe ser una imagen")
     
     # Validar tamaño (5MB máximo)
-    foto.file.seek(0, 2)  # Ir al final del archivo
+    foto.file.seek(0, 2)
     file_size = foto.file.tell()
-    foto.file.seek(0)  # Volver al inicio
+    foto.file.seek(0)
     
-    if file_size > 5 * 1024 * 1024:  # 5MB
+    if file_size > 5 * 1024 * 1024:
         raise HTTPException(400, "La imagen no debe superar 5MB")
     
     # Generar nombre único para la foto
+    import uuid
     ext = foto.filename.split(".")[-1]
     filename = f"usuario_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = UPLOAD_DIR / filename
     
     # Guardar archivo
+    import shutil
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(foto.file, buffer)
     
@@ -128,7 +134,7 @@ async def crear_usuario_html(
         nombre=nombre.strip(),
         telefono=telefono.strip(),
         foto_path=foto_path,
-        password_hash=None,  # Sin contraseña
+        password_hash=None,
         activo=True
     )
     
