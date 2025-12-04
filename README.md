@@ -12,7 +12,6 @@
 - [Base de Datos](#-base-de-datos)
 - [Validaciones](#-validaciones-y-reglas-de-negocio)
 - [Despliegue](#-despliegue)
-- [Autor](#-autor)
 
 
 
