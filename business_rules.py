@@ -47,13 +47,15 @@ class BusinessRules:
     
     @staticmethod
     def validar_licencia(licencia: str) -> None:
-        if not licencia or not licencia.strip():
-            raise HTTPException(400, "La licencia no puede estar vacía")
+        """Validar licencia (opcional, de 1 a 6 caracteres)"""
+        if not licencia:  # Si está vacía, permitirlo
+            return
+        
         licencia = licencia.strip()
-        if len(licencia) < 5 or len(licencia) > 20:
-            raise HTTPException(400, "La licencia debe tener entre 5 y 20 caracteres")
-        if not re.match(r'^[A-Z0-9]+$', licencia.upper()):
-            raise HTTPException(400, "La licencia solo puede contener letras y números")
+        if len(licencia) < 1:
+            raise HTTPException(400, "La licencia no puede estar vacía")
+        if len(licencia) > 6:
+            raise HTTPException(400, "La licencia debe tener entre 1 y 6 caracteres")
     
     @staticmethod
     def validar_conductor_disponible(db: Session, conductor_id: int) -> None:
@@ -72,6 +74,9 @@ class BusinessRules:
     
     @staticmethod
     def validar_licencia_unica(db: Session, licencia: str, conductor_id: int = None) -> None:
+        if not licencia or not licencia.strip():
+            return  # Si está vacía, no validar unicidad
+        
         query = db.query(models.Conductor).filter(models.Conductor.licencia == licencia.strip().upper())
         if conductor_id:
             query = query.filter(models.Conductor.id != conductor_id)
@@ -195,9 +200,12 @@ def aplicar_reglas_usuario(db: Session, nombre: str, telefono: str, contrasena: 
 
 def aplicar_reglas_conductor(db: Session, nombre: str, licencia: str, es_nuevo: bool = True, conductor_id: int = None) -> None:
     BusinessRules.validar_nombre_usuario(nombre)
-    BusinessRules.validar_licencia(licencia)
-    if es_nuevo or licencia:
-        BusinessRules.validar_licencia_unica(db, licencia, conductor_id)
+    
+    # Solo validar formato de licencia si no está vacía
+    if licencia and licencia.strip():
+        BusinessRules.validar_licencia(licencia)
+        # ❌ ELIMINADO: Ya no validamos que la licencia sea única
+        # Las licencias pueden repetirse entre conductores
 
 
 def aplicar_reglas_vehiculo(db: Session, placa: str, es_nuevo: bool = True, vehiculo_id: int = None) -> None:

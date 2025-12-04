@@ -85,6 +85,31 @@
             margin-top: 10px;
         }
         
+        .card-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 13px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            flex: 1;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+        }
+        
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -309,6 +334,9 @@
                             <p><strong>Licencia:</strong> ${c.licencia || 'N/A'}</p>
                             <p><strong>Estado:</strong> ${c.activo ? '✅ Activo' : '❌ Inactivo'}</p>
                             ${vehiculosHTML}
+                            <div class="card-actions">
+                                <button class="btn-small btn-danger" onclick="eliminarConductor(${c.id})">🗑️ Eliminar</button>
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -399,6 +427,27 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('❌ Error al crear conductor');
+            }
+        }
+        
+        async function eliminarConductor(id) {
+            if (!confirm('¿Eliminar este conductor permanentemente?')) return;
+            
+            try {
+                const res = await fetch(`/api/conductores/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (res.ok) {
+                    alert('✅ Conductor eliminado');
+                    cargarConductores();
+                } else {
+                    const error = await res.json();
+                    alert('❌ ' + error.detail);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al eliminar');
             }
         }
         

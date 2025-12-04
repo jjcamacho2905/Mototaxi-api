@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚖 Inicio - Mototaxi Supatá</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 18px;
+        }
+        
+        .quick-access {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .quick-access h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        
+        .btn .icon {
+            font-size: 36px;
+        }
+        
+        .back-btn {
+            text-align: center;
+        }
+        
+        .back-btn a {
+            padding: 12px 30px;
+            background: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .back-btn a:hover {
+            background: #0b7dda;
+        }
+        
+        .footer {
+            background: #2c3e50;
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+            margin-top: 30px;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .footer h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+        
+        .footer ul {
+            list-style: none;
+        }
+        
+        .footer ul li {
+            margin: 8px 0;
+            color: #bdc3c7;
+        }
+        
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #34495e;
+            color: #95a5a6;
+        }
+        
+        .tech-stack {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .tech-badge {
+            background: #34495e;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 32px;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .buttons-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚖 Mototaxi Supatá</h1>
+            <p>Sistema de Gestión de Transporte</p>
+        </div>
+        
+        <div class="quick-access">
+            <h2>Acceso Rápido</h2>
+            
+            <div class="buttons-grid">
+                <a href="/dashboard" class="btn">
+                    <span class="icon">📊</span>
+                    <span>Ver Inventario</span>
+                </a>
+                
+                <a href="/usuarios" class="btn">
+                    <span class="icon">👥</span>
+                    <span>Crear Usuario</span>
+                </a>
+                
+                <a href="/conductores" class="btn">
+                    <span class="icon">🏍️</span>
+                    <span>Crear Conductor</span>
+                </a>
+                
+                <a href="/vehiculos" class="btn">
+                    <span class="icon">🚗</span>
+                    <span>Crear Vehículo</span>
+                </a>
+                
+                <a href="/viajes" class="btn">
+                    <span class="icon">🚖</span>
+                    <span>Crear Viaje</span>
+                </a>
+                
+                <a href="/buscar" class="btn">
+                    <span class="icon">🔍</span>
+                    <span>Buscar</span>
+                </a>
+            </div>
+            
+            <div class="back-btn">
+                <a href="/dashboard">Volver al Inicio</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-content">
+                <div>
+                    <h3>Mi Tienda</h3>
+                    <p>Sistema de gestión de mototaxis completo para administración de usuarios, conductores, vehículos y viajes.</p>
+                    <p style="margin-top: 15px; color: #3498db;">
+                        <strong>🧑‍💻 Versión estable</strong>
+                    </p>
+                </div>
+                
+                <div>
+                    <h3>Desarrollo</h3>
+                    <ul>
+                        <li><strong>Desarrollador:</strong></li>
+                        <li>Jonathan - Mototaxi Supatá</li>
+                        <li><strong>GitHub:</strong></li>
+                        <li><a href="https://github.com/jonathan-mototaxi">github.com/jonathan-mototaxi</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2025 Mototaxi Supatá. Todos los derechos reservados.</p>
+                <div class="tech-stack">
+                    <span class="tech-badge">FastAPI</span>
+                    <span class="tech-badge">Python</span>
+                    <span class="tech-badge">SQLAlchemy</span>
+                    <span class="tech-badge">Jinja2</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

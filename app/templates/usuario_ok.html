@@ -1,17 +1,102 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Usuario creado</title>
-  <link rel="stylesheet" href="/static/style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✅ Usuario Creado - Mototaxi Supatá</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #4CAF50;
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        
+        .username {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-success {
+            background: #4CAF50;
+        }
+        
+        .btn-success:hover {
+            background: #45a049;
+        }
+    </style>
 </head>
 <body>
-  <div class="formulario">
-    <h1>Usuario creado con éxito</h1>
-    <p style="text-align:center">Se creó el usuario: <strong>{{ nombre }}</strong></p>
-    <p style="text-align:center">
-      <a href="/usuarios">Ir a la lista</a> | <a href="/usuarios/nuevo">Crear otro</a>
-    </p>
-  </div>
+    <div class="container">
+        <div class="icon">✅</div>
+        <h1>¡Usuario Creado Exitosamente!</h1>
+        <p>El usuario <span class="username">{{ nombre }}</span> ha sido registrado correctamente en el sistema.</p>
+        
+        <div class="buttons">
+            <a href="/usuarios" class="btn btn-primary">📋 Ver Lista de Usuarios</a>
+            <a href="/usuarios/nuevo" class="btn btn-success">➕ Crear Otro Usuario</a>
+        </div>
+    </div>
 </body>
 </html>

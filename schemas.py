@@ -13,7 +13,6 @@ class UsuarioCrear(UsuarioBase):
     contrasena: str
 
     # Validación simple: limitar longitud para evitar contraseñas excesivas
-    # (bcrypt puro limita a 72 bytes; con bcrypt_sha256 ya no aplica, pero dejamos una cota razonable)
     def model_post_init(self, __context):
         if len(self.contrasena) > 256:
             raise ValueError("La contraseña es demasiado larga (máximo 256 caracteres)")
@@ -32,7 +31,10 @@ class ConductorBase(BaseModel):
     foto_path: Optional[str] = None
 
 class ConductorCrear(ConductorBase):
-    pass
+    # Campos opcionales para crear vehículo junto con conductor
+    crear_vehiculo: Optional[bool] = False
+    placa_vehiculo: Optional[str] = None
+    modelo_vehiculo: Optional[str] = None
 
 class Conductor(ConductorBase):
     id: int
@@ -46,11 +48,12 @@ class VehiculoBase(BaseModel):
     modelo: Optional[str] = None
 
 class VehiculoCrear(VehiculoBase):
-    pass
+    conductor_id: Optional[int] = None  # Permite asignar conductor al crear
 
 class Vehiculo(VehiculoBase):
     id: int
     activo: bool
+    conductor_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 

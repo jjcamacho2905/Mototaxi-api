@@ -306,6 +306,15 @@
             border: 1px solid #ddd;
             border-radius: 5px;
         }
+        
+        .info-box {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #0277bd;
+        }
     </style>
 </head>
 <body>
@@ -367,6 +376,7 @@
                     <select id="vehiculo_id" required>
                         <option value="">Primero seleccione un conductor...</option>
                     </select>
+                    <div id="infoVehiculos" class="info-box" style="display: none;"></div>
                 </div>
                 
                 <div class="form-group">
@@ -434,27 +444,46 @@
         async function cargarVehiculosConductor() {
             const conductorId = document.getElementById('conductor_id').value;
             const selectVehiculos = document.getElementById('vehiculo_id');
+            const infoBox = document.getElementById('infoVehiculos');
             
             if (!conductorId) {
                 selectVehiculos.innerHTML = '<option value="">Primero seleccione un conductor...</option>';
+                infoBox.style.display = 'none';
                 return;
             }
             
-            // Filtrar vehículos del conductor
-            const vehiculosConductor = vehiculos.filter(v => 
-                v.conductor_id == conductorId && v.activo
-            );
-            
-            selectVehiculos.innerHTML = '<option value="">Seleccione un vehículo...</option>';
-            
-            if (vehiculosConductor.length === 0) {
-                selectVehiculos.innerHTML = '<option value="">Este conductor no tiene vehículos asignados</option>';
-                return;
+            try {
+                // Obtener vehículos del conductor desde el endpoint específico
+                const response = await fetch(`/api/vehiculos/conductor/${conductorId}`);
+                const data = await response.json();
+                const vehiculosConductor = data.vehiculos || [];
+                
+                selectVehiculos.innerHTML = '<option value="">Seleccione un vehículo...</option>';
+                
+                if (vehiculosConductor.length === 0) {
+                    selectVehiculos.innerHTML = '<option value="">Este conductor no tiene vehículos asignados</option>';
+                    infoBox.textContent = '⚠️ Este conductor no tiene vehículos. Debe asignarle un vehículo primero en la sección de Vehículos o Conductores.';
+                    infoBox.style.display = 'block';
+                    return;
+                }
+                
+                vehiculosConductor.forEach(v => {
+                    selectVehiculos.innerHTML += `<option value="${v.id}">🚗 ${v.placa} - ${v.modelo || 'Sin modelo'}</option>`;
+                });
+                
+                infoBox.textContent = `✅ ${vehiculosConductor.length} vehículo(s) disponible(s) para este conductor`;
+                infoBox.style.display = 'block';
+                infoBox.style.background = '#d4edda';
+                infoBox.style.color = '#155724';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                selectVehiculos.innerHTML = '<option value="">Error al cargar vehículos</option>';
+                infoBox.textContent = '❌ Error al cargar los vehículos del conductor';
+                infoBox.style.display = 'block';
+                infoBox.style.background = '#f8d7da';
+                infoBox.style.color = '#721c24';
             }
-            
-            vehiculosConductor.forEach(v => {
-                selectVehiculos.innerHTML += `<option value="${v.id}">${v.placa} - ${v.modelo || 'N/A'}</option>`;
-            });
         }
         
         async function cargarViajes() {
@@ -580,6 +609,7 @@
         function cerrarModal() {
             document.getElementById('modalViaje').style.display = 'none';
             document.getElementById('formViaje').reset();
+            document.getElementById('infoVehiculos').style.display = 'none';
         }
         
         async function crearViaje(event) {
@@ -609,7 +639,8 @@
                     cerrarModal();
                     await cargarViajes();
                 } else {
-                    alert('❌ Error al crear viaje');
+                    const error = await response.json();
+                    alert('❌ Error: ' + (error.detail || 'Error desconocido'));
                 }
             } catch (error) {
                 console.error('Error:', error);

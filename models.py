@@ -19,12 +19,11 @@ class Conductor(Base):
     __tablename__ = "conductores"
 
     id = Column(Integer, primary_key=True, index=True)
-    nombre = Column(String, nullable=False)
+    nombre = Column(String, nullable=False, unique=True)  # Único para buscar por nombre
     licencia = Column(String, nullable=True)
     foto_path = Column(String, nullable=True)
     activo = Column(Boolean, default=True)
 
-    # NUEVO: Relación con vehículos
     vehiculos = relationship("Vehiculo", back_populates="conductor")
     viajes = relationship("Viaje", back_populates="conductor")
 
@@ -38,11 +37,10 @@ class Vehiculo(Base):
     foto_path = Column(String, nullable=True)
     activo = Column(Boolean, default=True)
     
-    # NUEVO: Foreign Key al conductor dueño
+    # Relación con conductor
     conductor_id = Column(Integer, ForeignKey("conductores.id"), nullable=True)
-
-    # NUEVO: Relación con conductor
     conductor = relationship("Conductor", back_populates="vehiculos")
+    
     viajes = relationship("Viaje", back_populates="vehiculo")
 
 
@@ -58,25 +56,8 @@ class Viaje(Base):
     precio = Column(Float, nullable=True)
     fecha = Column(DateTime, nullable=False, server_default=func.now())
     estado = Column(String, nullable=False, default="pendiente")
-    
-    # NUEVO: Campo para foto del viaje
-    foto_path = Column(String, nullable=True)
     activo = Column(Boolean, default=True)
 
     usuario = relationship("Usuario", back_populates="viajes")
     conductor = relationship("Conductor", back_populates="viajes")
     vehiculo = relationship("Vehiculo", back_populates="viajes")
-
-
-class RutaHistorica(Base):
-    __tablename__ = "rutas_historicas"
-
-    id = Column(Integer, primary_key=True, index=True)
-    origen = Column(String, nullable=False)
-    destino = Column(String, nullable=False)
-    distancia_km = Column(Float, nullable=False)
-    tarifa_base = Column(Float, nullable=False)
-    tarifa_maxima = Column(Float, nullable=True)
-    tiempo_estimado_min = Column(Integer, nullable=True)
-    viajes_historicos = Column(Integer, default=0)
-    activo = Column(Boolean, default=True)

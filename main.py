@@ -30,73 +30,17 @@ UPLOAD_DIR = Path("app/static/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # 🔧 WORKAROUND PARA EL ERROR DE UNICODE EN FASTAPI
-# Esto evita el UnicodeDecodeError al manejar bytes no válidos en errores de validación
 from fastapi.encoders import ENCODERS_BY_TYPE
 ENCODERS_BY_TYPE[bytes] = lambda o: o.decode('utf-8', errors='ignore')
 
 # ============================================
-# 🔐 LOGIN & REGISTRO
+# 🏠 PÁGINA DE INICIO (SIN LOGIN)
 # ============================================
 
-@app.get("/", tags=["Autenticación"])
-def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
-
-
-@app.post("/login", tags=["Autenticación"])
-def login(request: Request,
-          username: str = Form(...),
-          password: str = Form(...),
-          db: Session = Depends(get_db)):
-
-    usuario = crud.autenticar_usuario(db, username, password)
-
-    if not usuario:
-        return templates.TemplateResponse(
-            "login.html",
-            {"request": request, "error": "Usuario o contraseña incorrectos"}
-        )
-
-    return templates.TemplateResponse("dashboard.html", {"request": request})
-
-
-@app.get("/register", tags=["Autenticación"])
-def register_page(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
-
-
-@app.post("/register", tags=["Autenticación"])
-def register_user(
-    request: Request,
-    nombre: str = Form(...),
-    telefono: str = Form(...),
-    contrasena: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    """Registrar un nuevo usuario"""
-    # Verificar si el usuario ya existe
-    usuario_existente = db.query(models.Usuario).filter(
-        models.Usuario.nombre == nombre
-    ).first()
-    
-    if usuario_existente:
-        return templates.TemplateResponse(
-            "register.html",
-            {"request": request, "error": "El usuario ya existe"}
-        )
-    
-    # Crear nuevo usuario usando el schema correcto
-    nuevo_usuario = schemas.UsuarioCrear(
-        nombre=nombre,
-        telefono=telefono,
-        contrasena=contrasena
-    )
-    crud.crear_usuario(db, nuevo_usuario)
-    
-    return templates.TemplateResponse(
-        "login.html",
-        {"request": request, "mensaje": "Usuario registrado exitosamente"}
-    )
+@app.get("/", tags=["Inicio"])
+def inicio_page(request: Request):
+    """Página de inicio sin autenticación"""
+    return templates.TemplateResponse("inicio.html", {"request": request})
 
 
 # ============================================
@@ -118,7 +62,7 @@ def vehiculos_page(request: Request):
     return templates.TemplateResponse("vehiculos.html", {"request": request})
 
 
-@app.get("/analisis", tags=["Páginas HTML"])  # ← AGREGAR ESTA RUTA AQUÍ
+@app.get("/analisis", tags=["Páginas HTML"])
 def analisis_page(request: Request):
     """Página de análisis con datos históricos"""
     return templates.TemplateResponse("analisis.html", {"request": request})
@@ -151,9 +95,9 @@ def nuevo_usuario_form(request: Request):
 def crear_usuario_html(request: Request,
                        nombre: str = Form(...),
                        telefono: str = Form(...),
-                       contrasena: str = Form(...),
+                       contrasena: str = Form(default="password123"),
                        db: Session = Depends(get_db)):
-
+    """Crear usuario desde formulario HTML - la contraseña es opcional"""
     nuevo = schemas.UsuarioCrear(
         nombre=nombre, telefono=telefono, contrasena=contrasena
     )
@@ -162,11 +106,6 @@ def crear_usuario_html(request: Request,
     return templates.TemplateResponse(
         "usuario_ok.html", {"request": request, "nombre": nombre}
     )
-    
-@app.get("/viajes", tags=["Páginas HTML"])
-def viajes_page(request: Request):
-    """Página de gestión de viajes"""
-    return templates.TemplateResponse("viajes.html", {"request": request})
 
 
 # ============================================
@@ -214,7 +153,6 @@ def buscar_usuario_por_nombre(nombre: str, db: Session = Depends(get_db)):
 
 # ============================================
 # 🏍️ CONDUCTORES API
-# (SIN CAMBIOS)
 # ============================================
 
 @app.get("/api/conductores/", tags=["Conductores API"])
@@ -224,6 +162,14 @@ def listar_conductores(db: Session = Depends(get_db)):
 
 @app.post("/api/conductores/", tags=["Conductores API"])
 def crear_conductor(conductor: schemas.ConductorCrear, db: Session = Depends(get_db)):
+    # Si viene con datos de vehículo, crearlo también
+    if hasattr(conductor, 'crear_vehiculo') and conductor.crear_vehiculo:
+        return crud.crear_conductor_con_vehiculo(
+            db, 
+            conductor, 
+            conductor.placa_vehiculo,
+            conductor.modelo_vehiculo
+        )
     return crud.crear_conductor(db, conductor)
 
 
@@ -248,8 +194,27 @@ def eliminar_conductor(conductor_id: int, db: Session = Depends(get_db)):
     return {"mensaje": "Conductor eliminado correctamente"}
 
 
+@app.get("/api/conductores/{conductor_id}/estado", tags=["Conductores API"])
+def verificar_estado_conductor(conductor_id: int, db: Session = Depends(get_db)):
+    """Verificar si un conductor está libre u ocupado"""
+    conductor = crud.obtener_conductor_por_id(db, conductor_id)
+    if not conductor:
+        raise HTTPException(status_code=404, detail="Conductor no encontrado")
+    
+    esta_libre = crud.conductor_esta_libre(db, conductor_id)
+    viajes_activos = crud.obtener_viajes_activos_por_conductor(db, conductor_id)
+    
+    return {
+        "conductor": conductor,
+        "esta_libre": esta_libre,
+        "estado": "libre" if esta_libre else "ocupado",
+        "viajes_activos": len(viajes_activos),
+        "vehiculos": conductor.vehiculos
+    }
+
+
 # ============================================
-# 🚗 SECCIÓN: VEHÍCULOS API
+# 🚗 VEHÍCULOS API
 # ============================================
 
 @app.get("/api/vehiculos/", tags=["Vehículos API"])
@@ -291,6 +256,17 @@ def buscar_vehiculo_por_placa(placa: str, db: Session = Depends(get_db)):
     return vehiculos
 
 
+@app.get("/api/vehiculos/conductor/{conductor_id}", tags=["Vehículos API"])
+def obtener_vehiculos_de_conductor(conductor_id: int, db: Session = Depends(get_db)):
+    """Obtener todos los vehículos de un conductor específico"""
+    vehiculos = crud.obtener_vehiculos_por_conductor(db, conductor_id)
+    return {
+        "conductor_id": conductor_id,
+        "vehiculos": vehiculos,
+        "total": len(vehiculos)
+    }
+
+
 @app.delete("/api/vehiculos/{vehiculo_id}", tags=["Vehículos API"])
 def eliminar_vehiculo(vehiculo_id: int, db: Session = Depends(get_db)):
     """Eliminar vehículo permanentemente"""
@@ -301,7 +277,7 @@ def eliminar_vehiculo(vehiculo_id: int, db: Session = Depends(get_db)):
 
 
 # ============================================
-# 🚖 SECCIÓN: VIAJES API
+# 🚖 VIAJES API
 # ============================================
 
 @app.get("/api/viajes/", tags=["Viajes API"])
@@ -318,15 +294,11 @@ def crear_viaje(viaje: schemas.ViajeCrear, db: Session = Depends(get_db)):
 
 @app.patch("/api/viajes/{viaje_id}/completar", tags=["Viajes API"])
 def completar_viaje_endpoint(viaje_id: int, db: Session = Depends(get_db)):
-    """
-    Marcar un viaje como COMPLETADO
-    El conductor quedará LIBRE automáticamente
-    """
+    """Marcar un viaje como COMPLETADO - El conductor quedará LIBRE"""
     viaje = crud.completar_viaje(db, viaje_id)
     if not viaje:
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
     
-    # Verificar si el conductor está libre ahora
     conductor_libre = crud.conductor_esta_libre(db, viaje.conductor_id)
     
     return {
@@ -338,10 +310,7 @@ def completar_viaje_endpoint(viaje_id: int, db: Session = Depends(get_db)):
 
 @app.patch("/api/viajes/{viaje_id}/cancelar", tags=["Viajes API"])
 def cancelar_viaje_endpoint(viaje_id: int, db: Session = Depends(get_db)):
-    """
-    Cancelar un viaje
-    El conductor quedará LIBRE automáticamente
-    """
+    """Cancelar un viaje - El conductor quedará LIBRE"""
     viaje = crud.cancelar_viaje(db, viaje_id)
     if not viaje:
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
@@ -361,10 +330,7 @@ def actualizar_estado_viaje_endpoint(
     actualizacion: schemas.ViajeActualizar,
     db: Session = Depends(get_db)
 ):
-    """
-    Actualizar el estado de un viaje
-    Estados válidos: pendiente, en_curso, completado, cancelado
-    """
+    """Actualizar el estado de un viaje"""
     viaje = crud.actualizar_estado_viaje(db, viaje_id, actualizacion.estado)
     if not viaje:
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
@@ -387,27 +353,6 @@ def obtener_viajes_activos_conductor(conductor_id: int, db: Session = Depends(ge
     }
 
 
-@app.get("/api/conductores/{conductor_id}/estado", tags=["Conductores API"])
-def verificar_estado_conductor(conductor_id: int, db: Session = Depends(get_db)):
-    """
-    Verificar si un conductor está libre u ocupado
-    """
-    conductor = crud.obtener_conductor_por_id(db, conductor_id)
-    if not conductor:
-        raise HTTPException(status_code=404, detail="Conductor no encontrado")
-    
-    esta_libre = crud.conductor_esta_libre(db, conductor_id)
-    viajes_activos = crud.obtener_viajes_activos_por_conductor(db, conductor_id)
-    
-    return {
-        "conductor": conductor,
-        "esta_libre": esta_libre,
-        "estado": "libre" if esta_libre else "ocupado",
-        "viajes_activos": len(viajes_activos),
-        "vehiculos": conductor.vehiculos
-    }
-
-
 @app.delete("/api/viajes/{viaje_id}", tags=["Viajes API"])
 def eliminar_viaje(viaje_id: int, db: Session = Depends(get_db)):
     """Eliminar viaje permanentemente"""
@@ -418,22 +363,80 @@ def eliminar_viaje(viaje_id: int, db: Session = Depends(get_db)):
 
 
 # ============================================
-# 🚗 VEHÍCULOS API - ENDPOINT ADICIONAL
+# 📸 SUBIDA DE IMÁGENES
 # ============================================
 
-@app.get("/api/vehiculos/conductor/{conductor_id}", tags=["Vehículos API"])
-def obtener_vehiculos_de_conductor(conductor_id: int, db: Session = Depends(get_db)):
-    """Obtener todos los vehículos de un conductor específico"""
-    vehiculos = crud.obtener_vehiculos_por_conductor(db, conductor_id)
-    return {
-        "conductor_id": conductor_id,
-        "vehiculos": vehiculos,
-        "total": len(vehiculos)
-    }
+@app.post("/api/upload/usuario/{usuario_id}", tags=["Uploads"])
+async def subir_foto_usuario(usuario_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Subir foto de perfil de usuario"""
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
+    if not usuario:
+        raise HTTPException(404, "Usuario no encontrado")
+    
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(400, "El archivo debe ser una imagen")
+    
+    ext = file.filename.split(".")[-1]
+    filename = f"usuario_{usuario_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = UPLOAD_DIR / filename
+    
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    usuario.foto_path = f"/static/uploads/{filename}"
+    db.commit()
+    
+    return {"mensaje": "Foto subida exitosamente", "ruta": usuario.foto_path}
+
+
+@app.post("/api/upload/conductor/{conductor_id}", tags=["Uploads"])
+async def subir_foto_conductor(conductor_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Subir foto de conductor"""
+    conductor = db.query(models.Conductor).filter(models.Conductor.id == conductor_id).first()
+    if not conductor:
+        raise HTTPException(404, "Conductor no encontrado")
+    
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(400, "El archivo debe ser una imagen")
+    
+    ext = file.filename.split(".")[-1]
+    filename = f"conductor_{conductor_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = UPLOAD_DIR / filename
+    
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    conductor.foto_path = f"/static/uploads/{filename}"
+    db.commit()
+    
+    return {"mensaje": "Foto subida exitosamente", "ruta": conductor.foto_path}
+
+
+@app.post("/api/upload/vehiculo/{vehiculo_id}", tags=["Uploads"])
+async def subir_foto_vehiculo(vehiculo_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Subir foto de vehículo"""
+    vehiculo = db.query(models.Vehiculo).filter(models.Vehiculo.id == vehiculo_id).first()
+    if not vehiculo:
+        raise HTTPException(404, "Vehículo no encontrado")
+    
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(400, "El archivo debe ser una imagen")
+    
+    ext = file.filename.split(".")[-1]
+    filename = f"vehiculo_{vehiculo_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = UPLOAD_DIR / filename
+    
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    vehiculo.foto_path = f"/static/uploads/{filename}"
+    db.commit()
+    
+    return {"mensaje": "Foto subida exitosamente", "ruta": vehiculo.foto_path}
 
 
 # ============================================
-# 🔍 SECCIÓN: BÚSQUEDA GLOBAL
+# 🔍 BÚSQUEDA GLOBAL
 # ============================================
 
 @app.get("/buscar", tags=["Búsqueda"])
