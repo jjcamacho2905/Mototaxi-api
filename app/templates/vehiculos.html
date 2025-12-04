@@ -208,17 +208,17 @@
         <header>
             <h1>🚗 Gestión de Vehículos</h1>
             <nav class="navbar">
-                <a href="/dashboard">🏠 Dashboard</a>
-                <a href="/usuarios">👥 Usuarios</a>
-                <a href="/conductores">🏍️ Conductores</a>
-                <a href="/vehiculos">🚗 Vehículos</a>
-                <a href="/viajes">🚖 Viajes</a>
-                <a href="/">🚪 Salir</a>
+                <a href="/dashboard"> Dashboard</a>
+                <a href="/usuarios"> Usuarios</a>
+                <a href="/conductores"> Conductores</a>
+                <a href="/vehiculos"> Vehículos</a>
+                <a href="/viajes"> Viajes</a>
+                <a href="/"> Salir</a>
             </nav>
         </header>
         
         <div class="actions">
-            <button class="btn" onclick="abrirModal()">➕ Nuevo Vehículo</button>
+            <button class="btn" onclick="abrirModal()"> Nuevo Vehículo</button>
             <button class="btn" onclick="cargarVehiculos()" style="background: #2196F3; margin-left: 10px;">🔄 Recargar</button>
         </div>
         
@@ -250,11 +250,11 @@
     </div>
     
     <script>
-        console.log('✅ Script cargado');
+        console.log(' Script cargado');
         
         // Cargar al inicio
         window.onload = function() {
-            console.log('✅ Página cargada');
+            console.log(' Página cargada');
             setTimeout(cargarVehiculos, 100);
         };
         
@@ -284,7 +284,7 @@
                             }
                             <h3>${v.placa}</h3>
                             <p><strong>Modelo:</strong> ${v.modelo}</p>
-                            <span class="badge activo">✅ Activo</span>
+                            <span class="badge activo"> Activo</span>
                             <div class="card-actions">
                                 <button class="btn btn-small btn-warning" onclick="inactivar(${v.id})">⏸️</button>
                                 <button class="btn btn-small btn-danger" onclick="eliminar(${v.id})">🗑️</button>
@@ -294,13 +294,13 @@
                 }
                 
                 grid.innerHTML = html;
-                console.log('✅ Grid actualizado');
+                console.log(' Grid actualizado');
                 
             } catch (error) {
-                console.error('❌ Error:', error);
+                console.error(' Error:', error);
                 grid.innerHTML = `
                     <div style="color:white; grid-column: 1/-1; text-align: center; padding: 40px;">
-                        <h2>❌ Error: ${error.message}</h2>
+                        <h2> Error: ${error.message}</h2>
                         <button class="btn" onclick="cargarVehiculos()">🔄 Reintentar</button>
                     </div>
                 `;

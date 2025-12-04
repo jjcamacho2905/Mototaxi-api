@@ -277,19 +277,19 @@
         <header>
             <h1>👥 Lista de Usuarios</h1>
             <nav class="navbar">
-                <a href="/">🏠 Inicio</a>
-                <a href="/dashboard">📊 Dashboard</a>
-                <a href="/usuarios">➕ Crear Usuario</a>
-                <a href="/lista-usuarios">👥 Lista Usuarios</a>
-                <a href="/conductores">🏍️ Conductores</a>
-                <a href="/vehiculos">🚗 Vehículos</a>
-                <a href="/viajes">🚖 Viajes</a>
-                <a href="/buscar">🔍 Buscar</a>
+                <a href="/"> Inicio</a>
+                <a href="/dashboard"> Dashboard</a>
+                <a href="/usuarios"> Crear Usuario</a>
+                <a href="/lista-usuarios"> Lista Usuarios</a>
+                <a href="/conductores"> Conductores</a>
+                <a href="/vehiculos"> Vehículos</a>
+                <a href="/viajes"> Viajes</a>
+                <a href="/buscar"🔍 Buscar</a>
             </nav>
         </header>
         
         <div class="actions">
-            <a href="/usuarios" class="btn">➕ Crear Nuevo Usuario</a>
+            <a href="/usuarios" class="btn"> Crear Nuevo Usuario</a>
             <button class="btn btn-reload" onclick="location.reload()">🔄 Recargar</button>
             
             <div class="search-box">
@@ -332,7 +332,7 @@
                     </div>
                     
                     <span class="badge {% if usuario.activo %}activo{% else %}inactivo{% endif %}">
-                        {% if usuario.activo %}✅ Activo{% else %}❌ Inactivo{% endif %}
+                        {% if usuario.activo %} Activo{% else %}❌ Inactivo{% endif %}
                     </span>
                     
                     <div class="card-actions">
@@ -388,15 +388,15 @@
                 });
                 
                 if (response.ok) {
-                    alert(`✅ Usuario "${nombre}" inactivado correctamente`);
+                    alert(` Usuario "${nombre}" inactivado correctamente`);
                     location.reload();
                 } else {
                     const error = await response.json();
-                    alert(`❌ Error: ${error.detail || 'No se pudo inactivar'}`);
+                    alert(` Error: ${error.detail || 'No se pudo inactivar'}`);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('❌ Error al inactivar usuario');
+                alert(' Error al inactivar usuario');
             }
         }
         
@@ -405,7 +405,7 @@
             
             const confirmacion = prompt('Escribe "ELIMINAR" en mayúsculas para confirmar:');
             if (confirmacion !== 'ELIMINAR') {
-                alert('❌ Eliminación cancelada');
+                alert(' Eliminación cancelada');
                 return;
             }
             
@@ -415,15 +415,15 @@
                 });
                 
                 if (response.ok) {
-                    alert(`✅ Usuario "${nombre}" eliminado permanentemente`);
+                    alert(` Usuario "${nombre}" eliminado permanentemente`);
                     location.reload();
                 } else {
                     const error = await response.json();
-                    alert(`❌ Error: ${error.detail || 'No se pudo eliminar'}`);
+                    alert(` Error: ${error.detail || 'No se pudo eliminar'}`);
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('❌ Error al eliminar usuario');
+                alert(' Error al eliminar usuario');
             }
         }
     </script>

@@ -16,26 +16,14 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .container {
       max-width: 600px;
-      margin: 0 auto;
-    }
-    
-    header {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    
-    header h1 {
-      color: #667eea;
-      font-size: 32px;
-      margin-bottom: 20px;
+      width: 100%;
     }
     
     .formulario {
@@ -45,11 +33,11 @@
       box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     }
 
-    h2 {
+    h1 {
       text-align: center;
-      color: #333;
+      color: #667eea;
       margin-bottom: 30px;
-      font-size: 24px;
+      font-size: 28px;
     }
     
     .form-group {
@@ -150,7 +138,7 @@
     
     .file-name {
       margin-top: 10px;
-      color: #666;
+      color: #4CAF50;
       font-size: 14px;
       text-align: center;
       font-weight: 600;
@@ -198,22 +186,33 @@
       border-radius: 8px;
       margin-top: 10px;
       font-weight: bold;
+      transition: all 0.3s;
+    }
+    
+    .btn-volver:hover {
+      background: #5a6268;
+      transform: translateY(-2px);
+    }
+
+    .version-info {
+      text-align: center;
+      color: white;
+      margin-top: 20px;
+      font-size: 12px;
+      opacity: 0.8;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>🚖 Crear Nuevo Usuario</h1>
-    </header>
-    
     <div class="formulario">
+      <h1>🚖 Crear Nuevo Usuario</h1>
+      
       <div id="successMessage" class="success-message"></div>
       <div id="errorMessage" class="error-message"></div>
       
       <form id="formUsuario" onsubmit="crearUsuario(event)" enctype="multipart/form-data">
         
-        <!-- SOLO NOMBRE -->
         <div class="form-group">
           <label for="nombre">👤 Nombre Completo <span class="required">*</span></label>
           <input 
@@ -228,7 +227,6 @@
           <div class="help-text">Mínimo 3 caracteres</div>
         </div>
 
-        <!-- SOLO TELEFONO -->
         <div class="form-group">
           <label for="telefono">📱 Teléfono <span class="required">*</span></label>
           <input 
@@ -242,12 +240,11 @@
           <div class="help-text">Entre 7 y 15 dígitos sin espacios</div>
         </div>
 
-        <!-- SOLO FOTO -->
         <div class="form-group">
           <label>📸 Foto de Perfil <span class="required">*</span></label>
           <div class="file-input-wrapper">
             <label for="foto" class="file-input-label">
-              📁 Seleccionar Imagen
+               Seleccionar Imagen
             </label>
             <input type="file" id="foto" name="foto" accept="image/*" onchange="previewImage(this)" required>
           </div>
@@ -259,15 +256,20 @@
         </div>
 
         <button type="submit" class="btn-submit" id="btnSubmit">
-          ✅ Crear Usuario
+           Crear Usuario
         </button>
         
         <a href="/" class="btn-volver">⬅️ Volver al Inicio</a>
       </form>
     </div>
+    
+    <div class="version-info">
+      Versión sin contraseña - Actualizado 03/12/2025
+    </div>
   </div>
 
   <script>
+    console.log('🎯 Formulario SIN CONTRASEÑA cargado - v2.0');
     let fotoFile = null;
 
     function previewImage(input) {
@@ -277,7 +279,6 @@
       if (input.files && input.files[0]) {
         fotoFile = input.files[0];
         
-        // Validar tipo
         if (!fotoFile.type.startsWith('image/')) {
           alert('⚠️ Por favor selecciona una imagen válida');
           input.value = '';
@@ -287,7 +288,6 @@
           return;
         }
 
-        // Validar tamaño
         if (fotoFile.size > 5 * 1024 * 1024) {
           alert('⚠️ La imagen no debe superar 5MB');
           input.value = '';
@@ -297,7 +297,6 @@
           return;
         }
         
-        // Mostrar preview
         const reader = new FileReader();
         reader.onload = function(e) {
           preview.src = e.target.result;
@@ -331,9 +330,8 @@
     async function crearUsuario(event) {
       event.preventDefault();
       
-      // Validar que hay foto
       if (!fotoFile) {
-        showError('❌ Debes seleccionar una foto de perfil');
+        showError(' Debes seleccionar una foto de perfil');
         return;
       }
 
@@ -345,7 +343,6 @@
       const telefono = document.getElementById('telefono').value.trim();
       
       try {
-        // Crear FormData
         const formData = new FormData();
         formData.append('nombre', nombre);
         formData.append('telefono', telefono);
@@ -353,7 +350,6 @@
 
         console.log('📤 Enviando:', nombre, telefono, fotoFile.name);
 
-        // Enviar al servidor
         const response = await fetch('/usuarios/nuevo', {
           method: 'POST',
           body: formData
@@ -365,27 +361,25 @@
         }
 
         const resultado = await response.json();
-        console.log('✅ Resultado:', resultado);
+        console.log(' Resultado:', resultado);
 
-        showSuccess(`✅ Usuario "${nombre}" creado exitosamente`);
+        showSuccess(` Usuario "${nombre}" creado exitosamente`);
 
-        // Limpiar formulario
         document.getElementById('formUsuario').reset();
         document.getElementById('preview').style.display = 'none';
         document.getElementById('fileName').textContent = '';
         fotoFile = null;
 
-        // Redirigir
         setTimeout(() => {
           window.location.href = '/';
         }, 2000);
 
       } catch (error) {
-        console.error('❌ Error:', error);
-        showError('❌ ' + error.message);
+        console.error(' Error:', error);
+        showError(' ' + error.message);
       } finally {
         btnSubmit.disabled = false;
-        btnSubmit.textContent = '✅ Crear Usuario';
+        btnSubmit.textContent = ' Crear Usuario';
       }
     }
   </script>

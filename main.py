@@ -1,5 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, File, UploadFile
-from fastapi import Request, Form
+from fastapi import FastAPI, Request, Depends, HTTPException, UploadFile, File, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -12,8 +11,8 @@ import os
 import models, schemas, crud
 from database import engine, get_db, Base
 
-# ❌ COMENTAR ESTA LÍNEA PARA NO CONECTAR AL INICIO
-# Base.metadata.create_all(bind=engine)
+# ✅ DESCOMENTAR ESTA LÍNEA PARA CREAR LAS TABLAS
+Base.metadata.create_all(bind=engine)
 
 # 🚀 INICIALIZAR FASTAPI
 app = FastAPI(
@@ -21,6 +20,7 @@ app = FastAPI(
     version="1.0",
     description="Sistema de gestión de mototaxis con usuarios, conductores, vehículos y viajes"
 )
+
 
 # 📁 CONFIGURACIÓN DE TEMPLATES Y ESTÁTICOS
 templates = Jinja2Templates(directory="app/templates")
@@ -51,13 +51,110 @@ def inicio_page(request: Request):
 
 @app.get("/dashboard", tags=["Páginas HTML"])
 def dashboard_page(request: Request, db: Session = Depends(get_db)):
-    """Dashboard con usuarios activos"""
-    usuarios = db.query(models.Usuario).filter(models.Usuario.activo == True).all()
+    """Dashboard con estadísticas completas"""
+    from sqlalchemy import func
+    from datetime import datetime, timedelta
+    
+    # Contar entidades activas
+    total_usuarios = db.query(models.Usuario).filter(models.Usuario.activo == True).count()
+    total_conductores = db.query(models.Conductor).filter(models.Conductor.activo == True).count()
+    total_vehiculos = db.query(models.Vehiculo).filter(models.Vehiculo.activo == True).count()
+    
+    # Estadísticas de viajes
+    total_viajes = db.query(models.Viaje).filter(models.Viaje.activo == True).count()
+    
+    viajes_completados = db.query(models.Viaje).filter(
+        models.Viaje.estado == 'completado',
+        models.Viaje.activo == True
+    ).count()
+    
+    viajes_en_curso = db.query(models.Viaje).filter(
+        models.Viaje.estado == 'en_curso',
+        models.Viaje.activo == True
+    ).count()
+    
+    viajes_pendientes = db.query(models.Viaje).filter(
+        models.Viaje.estado == 'pendiente',
+        models.Viaje.activo == True
+    ).count()
+    
+    viajes_cancelados = db.query(models.Viaje).filter(
+        models.Viaje.estado == 'cancelado',
+        models.Viaje.activo == True
+    ).count()
+    
+    # Ingresos totales (solo viajes completados)
+    ingresos_resultado = db.query(func.sum(models.Viaje.precio)).filter(
+        models.Viaje.estado == 'completado',
+        models.Viaje.activo == True
+    ).scalar()
+    ingresos_totales = ingresos_resultado or 0
+    
+    # Ingreso promedio por viaje
+    ingreso_promedio = ingresos_totales / viajes_completados if viajes_completados > 0 else 0
+    
+    # Viajes por día (últimos 7 días)
+    hoy = datetime.now()
+    viajes_por_dia = []
+    
+    for i in range(6, -1, -1):
+        fecha = hoy - timedelta(days=i)
+        fecha_inicio = fecha.replace(hour=0, minute=0, second=0, microsecond=0)
+        fecha_fin = fecha.replace(hour=23, minute=59, second=59, microsecond=999999)
+        
+        count = db.query(models.Viaje).filter(
+            models.Viaje.fecha >= fecha_inicio,
+            models.Viaje.fecha <= fecha_fin,
+            models.Viaje.activo == True
+        ).count()
+        
+        viajes_por_dia.append({
+            "fecha": fecha.strftime("%d/%m"),
+            "cantidad": count
+        })
+    
+    # Top 5 destinos más solicitados
+    destinos_populares = db.query(
+        models.Viaje.destino,
+        func.count(models.Viaje.id).label('cantidad')
+    ).filter(
+        models.Viaje.activo == True,
+        models.Viaje.destino.isnot(None)
+    ).group_by(
+        models.Viaje.destino
+    ).order_by(
+        func.count(models.Viaje.id).desc()
+    ).limit(5).all()
+    
+    # Viajes recientes (últimos 10)
+    viajes_recientes = db.query(models.Viaje).filter(
+        models.Viaje.activo == True
+    ).order_by(
+        models.Viaje.fecha.desc()
+    ).limit(10).all()
+    
+    # Usuarios activos (para la lista)
+    usuarios = db.query(models.Usuario).filter(
+        models.Usuario.activo == True
+    ).limit(20).all()
+    
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
+        "total_usuarios": total_usuarios,
+        "total_conductores": total_conductores,
+        "total_vehiculos": total_vehiculos,
+        "total_viajes": total_viajes,
+        "viajes_completados": viajes_completados,
+        "viajes_en_curso": viajes_en_curso,
+        "viajes_pendientes": viajes_pendientes,
+        "viajes_cancelados": viajes_cancelados,
+        "ingresos_totales": ingresos_totales,
+        "ingreso_promedio": ingreso_promedio,
+        "viajes_por_dia": viajes_por_dia,
+        "destinos_populares": destinos_populares,
+        "viajes_recientes": viajes_recientes,
         "usuarios": usuarios
     })
-
 
 @app.get("/conductores", tags=["Páginas HTML"])
 def conductores_page(request: Request):
@@ -86,15 +183,67 @@ def buscar_page(request: Request):
 @app.get("/inactivos", tags=["Páginas HTML"])
 def inactivos_page(request: Request, db: Session = Depends(get_db)):
     """Página de gestión de usuarios, conductores y vehículos inactivos"""
-    usuarios_inactivos = db.query(models.Usuario).filter(models.Usuario.activo == False).all()
-    conductores_inactivos = db.query(models.Conductor).filter(models.Conductor.activo == False).all()
-    vehiculos_inactivos = db.query(models.Vehiculo).filter(models.Vehiculo.activo == False).all()
+    from sqlalchemy.orm import joinedload
+    
+    # Obtener usuarios inactivos
+    usuarios_inactivos = db.query(models.Usuario).filter(
+        models.Usuario.activo == False
+    ).all()
+    
+    # Obtener conductores inactivos con sus vehículos
+    conductores_inactivos = db.query(models.Conductor).options(
+        joinedload(models.Conductor.vehiculos)
+    ).filter(
+        models.Conductor.activo == False
+    ).all()
+    
+    # Obtener vehículos inactivos
+    vehiculos_inactivos = db.query(models.Vehiculo).filter(
+        models.Vehiculo.activo == False
+    ).all()
+    
+    # Contar totales
+    total_usuarios = len(usuarios_inactivos)
+    total_conductores = len(conductores_inactivos)
+    total_vehiculos = len(vehiculos_inactivos)
+    
+    # Obtener estadísticas para el gráfico
+    from sqlalchemy import func
+    from datetime import datetime
+    
+    # Datos para el gráfico de estados
+    viajes_completados = db.query(models.Viaje).filter(
+        models.Viaje.estado == 'completado',
+        models.Viaje.activo == True
+    ).count()
+    
+    viajes_en_curso = db.query(models.Viaje).filter(
+        models.Viaje.estado == 'en_curso',
+        models.Viaje.activo == True
+    ).count()
+    
+    viajes_pendientes = db.query(models.Viaje).filter(
+        models.Viaje.estado == 'pendiente',
+        models.Viaje.activo == True
+    ).count()
+    
+    viajes_cancelados = db.query(models.Viaje).filter(
+        models.Viaje.estado == 'cancelado',
+        models.Viaje.activo == True
+    ).count()
     
     return templates.TemplateResponse("inactivos.html", {
         "request": request,
         "usuarios": usuarios_inactivos,
         "conductores": conductores_inactivos,
-        "vehiculos": vehiculos_inactivos
+        "vehiculos": vehiculos_inactivos,
+        "total_usuarios": total_usuarios,
+        "total_conductores": total_conductores,
+        "total_vehiculos": total_vehiculos,
+        "viajes_completados": viajes_completados,
+        "viajes_en_curso": viajes_en_curso,
+        "viajes_pendientes": viajes_pendientes,
+        "viajes_cancelados": viajes_cancelados
     })
 
 

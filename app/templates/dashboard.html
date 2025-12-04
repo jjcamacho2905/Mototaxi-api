@@ -4,614 +4,451 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Mototaxi Supatá</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #e6e6e6;
-            padding: 20px;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: auto;
-        }
-
-        header {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        header h1 {
-            color: #444;
-            font-size: 22px;
-            margin-bottom: 10px;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .navbar {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
         }
 
-        .navbar a {
-            padding: 8px 15px;
-            background: #5c6bc0;
-            color: white;
+        .navbar h1 {
+            color: #667eea;
+            font-size: 24px;
+        }
+
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .navbar-links a {
             text-decoration: none;
+            color: #333;
+            padding: 8px 16px;
             border-radius: 5px;
-            font-size: 14px;
+            transition: all 0.3s;
         }
 
-        .navbar a:hover {
-            background: #3f4aa3;
+        .navbar-links a:hover {
+            background: #667eea;
+            color: white;
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
         .stat-card {
-            text-align: center;
             background: white;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
         }
 
         .stat-card .icon {
-            font-size: 35px;
+            font-size: 40px;
+            margin-bottom: 10px;
         }
 
-        .stat-card .value {
-            font-size: 28px;
-            color: #5c6bc0;
+        .stat-card .number {
+            font-size: 36px;
             font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
         }
 
-        .charts-grid {
+        .stat-card .label {
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .stat-card.money .number {
+            color: #2ecc71;
+        }
+
+        .stat-card.completados .number {
+            color: #2ecc71;
+        }
+
+        .stat-card.en-curso .number {
+            color: #f39c12;
+        }
+
+        .stat-card.pendientes .number {
+            color: #3498db;
+        }
+
+        .stat-card.cancelados .number {
+            color: #e74c3c;
+        }
+
+        .charts-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
         .chart-card {
             background: white;
-            padding: 15px;
-            border-radius: 8px;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .chart-card h2 {
-            font-size: 16px;
-            margin-bottom: 10px;
+        .chart-card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 18px;
         }
 
-        /* ===== SECCIÓN DE USUARIOS ===== */
-        .usuarios-section {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
+        .destinos-list {
+            list-style: none;
         }
 
-        .usuarios-section h2 {
-            color: #444;
-            font-size: 20px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-header {
+        .destino-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .toggle-btn {
-            padding: 8px 16px;
-            background: #5c6bc0;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .toggle-btn:hover {
-            background: #3f4aa3;
-        }
-
-        .usuarios-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-        }
-
-        .usuario-card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            transition: all 0.3s;
-            background: #fafafa;
-        }
-
-        .usuario-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            border-color: #5c6bc0;
-        }
-
-        .usuario-foto {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin: 0 auto 10px;
-            border: 3px solid #5c6bc0;
-        }
-
-        .usuario-icon {
-            font-size: 60px;
+            padding: 12px;
             margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
         }
 
-        .usuario-card h3 {
+        .destino-nombre {
+            font-weight: 600;
             color: #333;
-            font-size: 16px;
-            margin: 10px 0 5px;
         }
 
-        .usuario-card p {
-            color: #666;
+        .destino-cantidad {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
             font-size: 14px;
-            margin: 5px 0;
         }
 
-        .badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 12px;
+        .viajes-recientes {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .viajes-recientes h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .viaje-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .viaje-item:last-child {
+            border-bottom: none;
+        }
+
+        .viaje-info {
+            flex: 1;
+        }
+
+        .viaje-ruta {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .viaje-fecha {
             font-size: 12px;
-            font-weight: bold;
-            margin-top: 8px;
+            color: #999;
         }
 
-        .badge.activo {
+        .viaje-precio {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2ecc71;
+            margin-right: 15px;
+        }
+
+        .estado-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .estado-completado {
             background: #d4edda;
             color: #155724;
         }
 
-        .badge.inactivo {
+        .estado-en-curso {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .estado-pendiente {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .estado-cancelado {
             background: #f8d7da;
             color: #721c24;
         }
 
-        .no-usuarios {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        .card-actions {
-            display: flex;
-            gap: 5px;
-            margin-top: 10px;
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            color: white;
-            font-weight: bold;
-            flex: 1;
-            transition: all 0.2s;
-        }
-
-        .btn-reactivar {
-            background: #4CAF50;
-        }
-
-        .btn-reactivar:hover {
-            background: #45a049;
-        }
-
-        .btn-eliminar {
-            background: #f44336;
-        }
-
-        .btn-eliminar:hover {
-            background: #d32f2f;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        @media (max-width: 800px) {
-            .charts-grid {
+        @media (max-width: 768px) {
+            .stats-grid {
                 grid-template-columns: 1fr;
             }
 
-            .usuarios-grid {
+            .charts-container {
                 grid-template-columns: 1fr;
+            }
+
+            .viaje-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
             }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
-
-<div class="container">
-
-    <header>
-        <h1>Dashboard - Mototaxi Supatá</h1>
-
-        <nav class="navbar">
+    <!-- NAVBAR -->
+    <div class="navbar">
+        <h1>🚖 Mototaxi Supatá</h1>
+        <div class="navbar-links">
             <a href="/">🏠 Inicio</a>
             <a href="/dashboard">📊 Dashboard</a>
-            <a href="/usuarios">➕ Crear Usuario</a>
-            <a href="/lista-usuarios">👥 Lista Usuarios</a>
+            <a href="/usuarios">👥 Usuarios</a>
             <a href="/conductores">🏍️ Conductores</a>
             <a href="/vehiculos">🚗 Vehículos</a>
             <a href="/viajes">🚖 Viajes</a>
-            <a href="/buscar">🔍 Buscar</a>
-        </nav>
-    </header>
+            <a href="/inactivos">⏸️ Inactivos</a>
+        </div>
+    </div>
 
-    <!-- TARJETAS -->
+    <!-- TARJETAS DE ESTADÍSTICAS -->
     <div class="stats-grid">
+        <!-- Totales -->
         <div class="stat-card">
-            <div class="icon">🚖</div>
-            <h3>Total Viajes</h3>
-            <div class="value" id="totalViajes">0</div>
+            <div class="icon"></div>
+            <div class="number">{{ total_usuarios }}</div>
+            <div class="label">Usuarios Activos</div>
         </div>
 
         <div class="stat-card">
-            <div class="icon">💰</div>
-            <h3>Ingresos Totales</h3>
-            <div class="value" id="ingresosTotales">$0</div>
+            <div class="icon"></div>
+            <div class="number">{{ total_conductores }}</div>
+            <div class="label">Conductores Activos</div>
         </div>
 
         <div class="stat-card">
-            <div class="icon">👥</div>
-            <h3>Usuarios Activos</h3>
-            <div class="value" id="usuariosActivos">0</div>
+            <div class="icon"></div>
+            <div class="number">{{ total_vehiculos }}</div>
+            <div class="label">Vehículos Activos</div>
         </div>
 
         <div class="stat-card">
-            <div class="icon">🏍️</div>
-            <h3>Conductores Activos</h3>
-            <div class="value" id="conductoresActivos">0</div>
+            <div class="icon"></div>
+            <div class="number">{{ total_viajes }}</div>
+            <div class="label">Total de Viajes</div>
+        </div>
+
+        <!-- Ingresos -->
+        <div class="stat-card money">
+            <div class="icon"></div>
+            <div class="number">${{ "{:,.0f}".format(ingresos_totales) }}</div>
+            <div class="label">Ingresos Totales</div>
+        </div>
+
+        <div class="stat-card money">
+            <div class="icon"></div>
+            <div class="number">${{ "{:,.0f}".format(ingreso_promedio) }}</div>
+            <div class="label">Ingreso Promedio</div>
+        </div>
+
+        <!-- Estados de viajes -->
+        <div class="stat-card completados">
+            <div class="icon"></div>
+            <div class="number">{{ viajes_completados }}</div>
+            <div class="label">Completados</div>
+        </div>
+
+        <div class="stat-card en-curso">
+            <div class="icon"></div>
+            <div class="number">{{ viajes_en_curso }}</div>
+            <div class="label">En Curso</div>
+        </div>
+
+        <div class="stat-card pendientes">
+            <div class="icon"></div>
+            <div class="number">{{ viajes_pendientes }}</div>
+            <div class="label">Pendientes</div>
+        </div>
+
+        <div class="stat-card cancelados">
+            <div class="icon"></div>
+            <div class="number">{{ viajes_cancelados }}</div>
+            <div class="label">Cancelados</div>
         </div>
     </div>
 
     <!-- GRÁFICAS -->
-    <div class="charts-grid">
-
+    <div class="charts-container">
+        <!-- Gráfica de viajes por día -->
         <div class="chart-card">
-            <h2>📈 Viajes por Día</h2>
-            <canvas id="viajesDiasChart"></canvas>
+            <h3>Viajes por Día (Últimos 7 días)</h3>
+            <canvas id="viajesPorDiaChart"></canvas>
         </div>
 
+        <!-- Gráfica de estados de viajes -->
         <div class="chart-card">
-            <h2>🎯 Estados de Viajes</h2>
+            <h3> Distribución de Estados</h3>
             <canvas id="estadosChart"></canvas>
         </div>
 
-    </div>
-
-    <!-- ===== LISTA DE USUARIOS ACTIVOS ===== -->
-    <div class="usuarios-section">
-        <div class="section-header">
-            <h2>
-                <span>👥</span>
-                <span>Usuarios Activos</span>
-                <span style="font-size: 14px; font-weight: normal; color: #666;">
-                    (Total: <span id="totalActivos">0</span>)
-                </span>
-            </h2>
-            <button class="toggle-btn" onclick="mostrarInactivos()">
-                📋 Ver Usuarios Inactivos
-            </button>
-        </div>
-
-        <div id="usuariosActivosGrid" class="usuarios-grid">
-            <!-- Se llenará con JavaScript -->
+        <!-- Top destinos -->
+        <div class="chart-card">
+            <h3> Top 5 Destinos Más Solicitados</h3>
+            <ul class="destinos-list">
+                {% for destino, cantidad in destinos_populares %}
+                <li class="destino-item">
+                    <span class="destino-nombre">{{ destino }}</span>
+                    <span class="destino-cantidad">{{ cantidad }} viajes</span>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 
-    <!-- ===== LISTA DE USUARIOS INACTIVOS ===== -->
-    <div class="usuarios-section hidden" id="seccionInactivos">
-        <div class="section-header">
-            <h2>
-                <span>❌</span>
-                <span>Usuarios Inactivos</span>
-                <span style="font-size: 14px; font-weight: normal; color: #666;">
-                    (Total: <span id="totalInactivos">0</span>)
-                </span>
-            </h2>
-            <button class="toggle-btn" onclick="ocultarInactivos()">
-                ⬆️ Ocultar Inactivos
-            </button>
-        </div>
-
-        <div id="usuariosInactivosGrid" class="usuarios-grid">
-            <!-- Se llenará con JavaScript -->
-        </div>
-    </div>
-
-</div>
-
-<script>
-let usuariosActivos = [];
-let usuariosInactivos = [];
-
-document.addEventListener('DOMContentLoaded', async () => {
-    await cargarEstadisticas();
-    await cargarUsuarios();
-    await cargarGraficas();
-});
-
-// ===== MOSTRAR/OCULTAR INACTIVOS =====
-function mostrarInactivos() {
-    document.getElementById('seccionInactivos').classList.remove('hidden');
-    window.scrollTo({
-        top: document.getElementById('seccionInactivos').offsetTop - 20,
-        behavior: 'smooth'
-    });
-}
-
-function ocultarInactivos() {
-    document.getElementById('seccionInactivos').classList.add('hidden');
-}
-
-// ===== CARGAR USUARIOS =====
-async function cargarUsuarios() {
-    try {
-        // Obtener usuarios activos
-        const resActivos = await fetch('/api/usuarios/estado/true');
-        usuariosActivos = await resActivos.json();
-        
-        // Obtener usuarios inactivos
-        const resInactivos = await fetch('/api/usuarios/estado/false');
-        usuariosInactivos = await resInactivos.json();
-        
-        // Actualizar contadores
-        document.getElementById('totalActivos').textContent = usuariosActivos.length;
-        document.getElementById('totalInactivos').textContent = usuariosInactivos.length;
-        
-        // Renderizar ambas listas
-        renderizarUsuariosActivos();
-        renderizarUsuariosInactivos();
-        
-    } catch (error) {
-        console.error('Error cargando usuarios:', error);
-    }
-}
-
-function renderizarUsuariosActivos() {
-    const grid = document.getElementById('usuariosActivosGrid');
-    
-    if (usuariosActivos.length === 0) {
-        grid.innerHTML = '<div class="no-usuarios">No hay usuarios activos</div>';
-        return;
-    }
-    
-    grid.innerHTML = usuariosActivos.map(usuario => `
-        <div class="usuario-card">
-            ${usuario.foto_path 
-                ? `<img src="${usuario.foto_path}" alt="${usuario.nombre}" class="usuario-foto">`
-                : '<div class="usuario-icon">👤</div>'
-            }
-            <h3>${usuario.nombre}</h3>
-            <p><strong>📱</strong> ${usuario.telefono}</p>
-            <p><strong>ID:</strong> #${usuario.id}</p>
-            <span class="badge activo">✅ Activo</span>
-            <div class="card-actions">
-                <button class="btn-small" style="background: #ff9800;" onclick="inactivarUsuario(${usuario.id}, '${usuario.nombre}')">
-                    ⏸️ Inactivar
-                </button>
+    <!-- VIAJES RECIENTES -->
+    <div class="viajes-recientes">
+        <h3> Viajes Recientes</h3>
+        {% for viaje in viajes_recientes %}
+        <div class="viaje-item">
+            <div class="viaje-info">
+                <div class="viaje-ruta">
+                    {{ viaje.origen or 'Sin origen' }} → {{ viaje.destino or 'Sin destino' }}
+                </div>
+                <div class="viaje-fecha">
+                    {{ viaje.fecha.strftime('%d/%m/%Y %H:%M') if viaje.fecha else 'Sin fecha' }}
+                </div>
             </div>
+            <div class="viaje-precio">${{ "{:,.0f}".format(viaje.precio or 0) }}</div>
+            <span class="estado-badge estado-{{ viaje.estado }}">
+                {{ viaje.estado.capitalize() }}
+            </span>
         </div>
-    `).join('');
-}
+        {% endfor %}
+    </div>
 
-function renderizarUsuariosInactivos() {
-    const grid = document.getElementById('usuariosInactivosGrid');
-    
-    if (usuariosInactivos.length === 0) {
-        grid.innerHTML = '<div class="no-usuarios">No hay usuarios inactivos</div>';
-        return;
-    }
-    
-    grid.innerHTML = usuariosInactivos.map(usuario => `
-        <div class="usuario-card" style="opacity: 0.8;">
-            ${usuario.foto_path 
-                ? `<img src="${usuario.foto_path}" alt="${usuario.nombre}" class="usuario-foto" style="filter: grayscale(100%);">`
-                : '<div class="usuario-icon" style="opacity: 0.5;">👤</div>'
+    <script>
+        // Datos para las gráficas desde el backend
+        const viajesPorDia = {{ viajes_por_dia | tojson }};
+        const viajesCompletados = {{ viajes_completados }};
+        const viajesEnCurso = {{ viajes_en_curso }};
+        const viajesPendientes = {{ viajes_pendientes }};
+        const viajesCancelados = {{ viajes_cancelados }};
+
+        // Gráfica de viajes por día
+        const ctx1 = document.getElementById('viajesPorDiaChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: viajesPorDia.map(d => d.fecha),
+                datasets: [{
+                    label: 'Viajes',
+                    data: viajesPorDia.map(d => d.cantidad),
+                    backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
             }
-            <h3>${usuario.nombre}</h3>
-            <p><strong>📱</strong> ${usuario.telefono}</p>
-            <p><strong>ID:</strong> #${usuario.id}</p>
-            <span class="badge inactivo">❌ Inactivo</span>
-            <div class="card-actions">
-                <button class="btn-small btn-reactivar" onclick="reactivarUsuario(${usuario.id}, '${usuario.nombre}')">
-                    ✅ Reactivar
-                </button>
-                <button class="btn-small btn-eliminar" onclick="eliminarUsuario(${usuario.id}, '${usuario.nombre}')">
-                    🗑️ Eliminar
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// ===== ACCIONES DE USUARIOS =====
-async function inactivarUsuario(id, nombre) {
-    if (!confirm(`¿Inactivar al usuario "${nombre}"?`)) return;
-    
-    try {
-        const response = await fetch(`/api/usuarios/${id}/inactivar`, {
-            method: 'PATCH'
         });
-        
-        if (response.ok) {
-            alert(`✅ Usuario "${nombre}" inactivado`);
-            await cargarUsuarios();
-            await cargarEstadisticas();
-        } else {
-            const error = await response.json();
-            alert(`❌ Error: ${error.detail}`);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('❌ Error al inactivar usuario');
-    }
-}
 
-async function reactivarUsuario(id, nombre) {
-    if (!confirm(`¿Reactivar al usuario "${nombre}"?`)) return;
-    
-    try {
-        // Necesitamos crear un endpoint de reactivación en el backend
-        const response = await fetch(`/api/usuarios/${id}/reactivar`, {
-            method: 'PATCH'
+        // Gráfica de estados (Dona)
+        const ctx2 = document.getElementById('estadosChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completados', 'En Curso', 'Pendientes', 'Cancelados'],
+                datasets: [{
+                    data: [viajesCompletados, viajesEnCurso, viajesPendientes, viajesCancelados],
+                    backgroundColor: [
+                        'rgba(46, 204, 113, 0.8)',
+                        'rgba(243, 156, 18, 0.8)',
+                        'rgba(52, 152, 219, 0.8)',
+                        'rgba(231, 76, 60, 0.8)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: 'white'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
         });
-        
-        if (response.ok) {
-            alert(`✅ Usuario "${nombre}" reactivado`);
-            await cargarUsuarios();
-            await cargarEstadisticas();
-        } else {
-            const error = await response.json();
-            alert(`❌ Error: ${error.detail}`);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('❌ Error al reactivar usuario');
-    }
-}
-
-async function eliminarUsuario(id, nombre) {
-    if (!confirm(`⚠️ ¿ELIMINAR PERMANENTEMENTE al usuario "${nombre}"?\n\nEsta acción NO se puede deshacer.`)) return;
-    
-    const confirmacion = prompt('Escribe "ELIMINAR" para confirmar:');
-    if (confirmacion !== 'ELIMINAR') {
-        alert('❌ Eliminación cancelada');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/usuarios/${id}`, {
-            method: 'DELETE'
-        });
-        
-        if (response.ok) {
-            alert(`✅ Usuario "${nombre}" eliminado permanentemente`);
-            await cargarUsuarios();
-            await cargarEstadisticas();
-        } else {
-            const error = await response.json();
-            alert(`❌ Error: ${error.detail}`);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('❌ Error al eliminar usuario');
-    }
-}
-
-// ===== ESTADÍSTICAS =====
-async function cargarEstadisticas() {
-    try {
-        const viajes = await (await fetch('/api/viajes/')).json();
-        document.getElementById('totalViajes').textContent = viajes.length;
-
-        const ingresos = viajes.reduce((s, v) => s + (v.precio || 0), 0);
-        document.getElementById('ingresosTotales').textContent = `$${ingresos.toLocaleString('es-CO')}`;
-
-        const usuarios = await (await fetch('/api/usuarios/estado/true')).json();
-        document.getElementById('usuariosActivos').textContent = usuarios.length;
-
-        const conductores = await (await fetch('/api/conductores/estado/true')).json();
-        document.getElementById('conductoresActivos').textContent = conductores.length;
-
-    } catch (e) { console.log("Error cargando estadísticas:", e); }
-}
-
-// ===== GRÁFICAS =====
-async function cargarGraficas() {
-    const viajes = await (await fetch('/api/viajes/')).json();
-    crearGraficaViajesPorDia(viajes);
-    crearGraficaEstados(viajes);
-}
-
-function crearGraficaViajesPorDia(viajes) {
-    const hoy = new Date();
-    const ultimos7 = {};
-
-    for (let i = 6; i >= 0; i--) {
-        const fecha = new Date(hoy);
-        fecha.setDate(fecha.getDate() - i);
-        const key = fecha.toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit'});
-        ultimos7[key] = 0;
-    }
-
-    viajes.forEach(v => {
-        const f = new Date(v.fecha);
-        const key = f.toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit'});
-        if (ultimos7[key] !== undefined) ultimos7[key]++;
-    });
-
-    new Chart(document.getElementById('viajesDiasChart'), {
-        type: "line",
-        data: {
-            labels: Object.keys(ultimos7),
-            datasets: [{
-                data: Object.values(ultimos7),
-                borderColor: "#5c6bc0",
-                backgroundColor: "rgba(92,107,192,0.2)",
-                fill: true
-            }]
-        },
-        options: {responsive: true, plugins:{legend:{display:false}}}
-    });
-}
-
-function crearGraficaEstados(viajes) {
-    const estados = {};
-    viajes.forEach(v => estados[v.estado] = (estados[v.estado] || 0) + 1);
-
-    new Chart(document.getElementById('estadosChart'), {
-        type: "doughnut",
-        data: {
-            labels: Object.keys(estados),
-            datasets: [{
-                data: Object.values(estados),
-                backgroundColor: ["#4CAF50", "#FFC107", "#F44336"]
-            }]
-        },
-        options: {responsive: true}
-    });
-}
-</script>
-
+    </script>
 </body>
 </html>

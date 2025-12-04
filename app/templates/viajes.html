@@ -322,18 +322,18 @@
         <header>
             <h1>🚖 Gestión de Viajes</h1>
             <nav class="navbar">
-                <a href="/dashboard">🏠 Dashboard</a>
-                <a href="/usuarios">👥 Usuarios</a>
-                <a href="/conductores">🏍️ Conductores</a>
-                <a href="/vehiculos">🚗 Vehículos</a>
-                <a href="/viajes">🚖 Viajes</a>
-                <a href="/buscar">🔍 Buscar</a>
+                <a href="/dashboard"> Dashboard</a>
+                <a href="/usuarios"> Usuarios</a>
+                <a href="/conductores"> Conductores</a>
+                <a href="/vehiculos"> Vehículos</a>
+                <a href="/viajes"> Viajes</a>
+                <a href="/buscar"> Buscar</a>
                 <a href="/">🚪 Salir</a>
             </nav>
         </header>
         
         <div class="actions">
-            <button class="btn" onclick="abrirModal()">➕ Nuevo Viaje</button>
+            <button class="btn" onclick="abrirModal()"> Nuevo Viaje</button>
             
             <div class="filters">
                 <label>Filtrar por estado:</label>
@@ -348,31 +348,31 @@
         </div>
         
         <div id="viajesGrid" class="viajes-grid">
-            <div style="color: white; text-align: center;">⏳ Cargando viajes...</div>
+            <div style="color: white; text-align: center;"> Cargando viajes...</div>
         </div>
     </div>
     
     <div id="modalViaje" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
-            <h2>➕ Nuevo Viaje</h2>
+            <h2> Nuevo Viaje</h2>
             <form id="formViaje" onsubmit="crearViaje(event)">
                 <div class="form-group">
-                    <label for="usuario_id">👤 Usuario:</label>
+                    <label for="usuario_id"> Usuario:</label>
                     <select id="usuario_id" required>
                         <option value="">Seleccione un usuario...</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="conductor_id">🏍️ Conductor:</label>
+                    <label for="conductor_id"> Conductor:</label>
                     <select id="conductor_id" required onchange="cargarVehiculosConductor()">
                         <option value="">Seleccione un conductor...</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="vehiculo_id">🚗 Vehículo:</label>
+                    <label for="vehiculo_id"> Vehículo:</label>
                     <select id="vehiculo_id" required>
                         <option value="">Primero seleccione un conductor...</option>
                     </select>
@@ -380,21 +380,21 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="origen">📍 Origen:</label>
+                    <label for="origen"> Origen:</label>
                     <input type="text" id="origen" placeholder="Ej: Centro de Supatá" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="destino">🎯 Destino:</label>
+                    <label for="destino"> Destino:</label>
                     <input type="text" id="destino" placeholder="Ej: Vereda La Palma" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="precio">💰 Precio (COP):</label>
+                    <label for="precio"> Precio (COP):</label>
                     <input type="number" id="precio" placeholder="Ej: 5000" min="1000" step="100" required>
                 </div>
                 
-                <button type="submit" class="btn">💾 Crear Viaje</button>
+                <button type="submit" class="btn"> Crear Viaje</button>
             </form>
         </div>
     </div>
@@ -471,7 +471,7 @@
                     selectVehiculos.innerHTML += `<option value="${v.id}">🚗 ${v.placa} - ${v.modelo || 'Sin modelo'}</option>`;
                 });
                 
-                infoBox.textContent = `✅ ${vehiculosConductor.length} vehículo(s) disponible(s) para este conductor`;
+                infoBox.textContent = ` ${vehiculosConductor.length} vehículo(s) disponible(s) para este conductor`;
                 infoBox.style.display = 'block';
                 infoBox.style.background = '#d4edda';
                 infoBox.style.color = '#155724';
@@ -528,25 +528,25 @@
                 if (viaje.estado === 'en_curso') {
                     botonesAccion = `
                         <button class="btn-completar" onclick="completarViaje(${viaje.id})">
-                            ✅ Completar Viaje
+                             Completar Viaje
                         </button>
                         <button class="btn-completar btn-cancelar" onclick="cancelarViaje(${viaje.id})">
-                            ❌ Cancelar
+                             Cancelar
                         </button>
                     `;
                 } else if (viaje.estado === 'pendiente') {
                     botonesAccion = `
                         <button class="btn-completar" onclick="iniciarViaje(${viaje.id})">
-                            🚀 Iniciar Viaje
+                             Iniciar Viaje
                         </button>
                         <button class="btn-completar btn-cancelar" onclick="cancelarViaje(${viaje.id})">
-                            ❌ Cancelar
+                             Cancelar
                         </button>
                     `;
                 } else {
                     botonesAccion = `
                         <button class="btn-completar btn-eliminar" onclick="eliminarViaje(${viaje.id})">
-                            🗑️ Eliminar
+                             Eliminar
                         </button>
                     `;
                 }
@@ -559,9 +559,9 @@
                         </div>
                         
                         <div class="route">
-                            <span class="location">📍 ${viaje.origen || 'N/A'}</span>
+                            <span class="location"> ${viaje.origen || 'N/A'}</span>
                             <span class="arrow">→</span>
-                            <span class="location">🎯 ${viaje.destino || 'N/A'}</span>
+                            <span class="location"> ${viaje.destino || 'N/A'}</span>
                         </div>
                         
                         <div class="viaje-precio">$${(viaje.precio || 0).toLocaleString('es-CO')}</div>
@@ -635,16 +635,16 @@
                 
                 if (response.ok) {
                     const viajeCreado = await response.json();
-                    alert(`✅ Viaje #${viajeCreado.id} creado exitosamente`);
+                    alert(` Viaje #${viajeCreado.id} creado exitosamente`);
                     cerrarModal();
                     await cargarViajes();
                 } else {
                     const error = await response.json();
-                    alert('❌ Error: ' + (error.detail || 'Error desconocido'));
+                    alert(' Error: ' + (error.detail || 'Error desconocido'));
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('❌ Error al crear viaje');
+                alert(' Error al crear viaje');
             }
         }
         
@@ -657,14 +657,14 @@
                 });
                 
                 if (response.ok) {
-                    alert('✅ Viaje completado. El conductor ahora está LIBRE');
+                    alert(' Viaje completado. El conductor ahora está LIBRE');
                     await cargarViajes();
                 } else {
-                    alert('❌ Error al completar viaje');
+                    alert(' Error al completar viaje');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('❌ Error al completar viaje');
+                alert(' Error al completar viaje');
             }
         }
         
@@ -679,7 +679,7 @@
                 });
                 
                 if (response.ok) {
-                    alert('✅ Viaje iniciado');
+                    alert(' Viaje iniciado');
                     await cargarViajes();
                 }
             } catch (error) {
@@ -696,7 +696,7 @@
                 });
                 
                 if (response.ok) {
-                    alert('✅ Viaje cancelado. El conductor ahora está LIBRE');
+                    alert(' Viaje cancelado. El conductor ahora está LIBRE');
                     await cargarViajes();
                 }
             } catch (error) {
@@ -713,7 +713,7 @@
                 });
                 
                 if (response.ok) {
-                    alert('✅ Viaje eliminado');
+                    alert(' Viaje eliminado');
                     await cargarViajes();
                 }
             } catch (error) {
