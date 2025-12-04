@@ -62,16 +62,16 @@ def vehiculos_page(request: Request):
     return templates.TemplateResponse("vehiculos.html", {"request": request})
 
 
-@app.get("/analisis", tags=["Páginas HTML"])
-def analisis_page(request: Request):
-    """Página de análisis con datos históricos"""
-    return templates.TemplateResponse("analisis.html", {"request": request})
-
-
 @app.get("/viajes", tags=["Páginas HTML"])
 def viajes_page(request: Request):
     """Página de gestión de viajes"""
     return templates.TemplateResponse("viajes.html", {"request": request})
+
+
+@app.get("/buscar", tags=["Páginas HTML"])
+def buscar_page(request: Request):
+    """Página de búsqueda"""
+    return templates.TemplateResponse("buscar.html", {"request": request})
 
 
 # ============================================
@@ -79,33 +79,68 @@ def viajes_page(request: Request):
 # ============================================
 
 @app.get("/usuarios", tags=["Usuarios HTML"])
-def usuarios_html(request: Request, db: Session = Depends(get_db)):
-    usuarios = db.query(models.Usuario).all()
-    return templates.TemplateResponse(
-        "usuarios.html", {"request": request, "usuarios": usuarios}
-    )
+def usuarios_html(request: Request):
+    """Formulario de creación de usuarios"""
+    return templates.TemplateResponse("usuario_form.html", {"request": request})
 
 
 @app.get("/usuarios/nuevo", tags=["Usuarios HTML"])
 def nuevo_usuario_form(request: Request):
+    """Alias para formulario de usuarios"""
     return templates.TemplateResponse("usuario_form.html", {"request": request})
 
 
 @app.post("/usuarios/nuevo", tags=["Usuarios HTML"])
-def crear_usuario_html(request: Request,
-                       nombre: str = Form(...),
-                       telefono: str = Form(...),
-                       contrasena: str = Form(default="password123"),
-                       db: Session = Depends(get_db)):
-    """Crear usuario desde formulario HTML - la contraseña es opcional"""
-    nuevo = schemas.UsuarioCrear(
-        nombre=nombre, telefono=telefono, contrasena=contrasena
+async def crear_usuario_html(
+    request: Request,
+    nombre: str = Form(...),
+    telefono: str = Form(...),
+    foto: UploadFile = File(...),  # Foto OBLIGATORIA
+    db: Session = Depends(get_db)
+):
+    """Crear usuario desde formulario HTML con foto obligatoria"""
+    
+    # Validar que sea imagen
+    if not foto.content_type.startswith("image/"):
+        raise HTTPException(400, "El archivo debe ser una imagen")
+    
+    # Validar tamaño (5MB máximo)
+    foto.file.seek(0, 2)  # Ir al final del archivo
+    file_size = foto.file.tell()
+    foto.file.seek(0)  # Volver al inicio
+    
+    if file_size > 5 * 1024 * 1024:  # 5MB
+        raise HTTPException(400, "La imagen no debe superar 5MB")
+    
+    # Generar nombre único para la foto
+    ext = foto.filename.split(".")[-1]
+    filename = f"usuario_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = UPLOAD_DIR / filename
+    
+    # Guardar archivo
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(foto.file, buffer)
+    
+    foto_path = f"/static/uploads/{filename}"
+    
+    # Crear usuario SIN contraseña
+    db_usuario = models.Usuario(
+        nombre=nombre.strip(),
+        telefono=telefono.strip(),
+        foto_path=foto_path,
+        password_hash=None,  # Sin contraseña
+        activo=True
     )
-    crud.crear_usuario(db, nuevo)
-
-    return templates.TemplateResponse(
-        "usuario_ok.html", {"request": request, "nombre": nombre}
-    )
+    
+    db.add(db_usuario)
+    db.commit()
+    db.refresh(db_usuario)
+    
+    return {
+        "mensaje": f"Usuario '{nombre}' creado exitosamente",
+        "id": db_usuario.id,
+        "foto_path": foto_path
+    }
 
 
 # ============================================
@@ -124,28 +159,35 @@ def crear_usuario_api(usuario: schemas.UsuarioCrear, db: Session = Depends(get_d
 
 @app.patch("/api/usuarios/{usuario_id}/inactivar", tags=["Usuarios API"])
 def inactivar_usuario(usuario_id: int, db: Session = Depends(get_db)):
-    usuario = crud.inactivar_usuario(db, usuario_id)
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(404, "Usuario no encontrado")
+    usuario.activo = False
+    db.commit()
+    db.refresh(usuario)
     return {"mensaje": f"Usuario '{usuario.nombre}' inactivado", "activo": usuario.activo}
 
 
 @app.delete("/api/usuarios/{usuario_id}", tags=["Usuarios API"])
 def eliminar_usuario(usuario_id: int, db: Session = Depends(get_db)):
-    eliminado = crud.eliminar_usuario(db, usuario_id)
-    if not eliminado:
+    usuario = db.query(models.Usuario).filter(models.Usuario.id == usuario_id).first()
+    if not usuario:
         raise HTTPException(404, "Usuario no encontrado")
+    db.delete(usuario)
+    db.commit()
     return {"mensaje": "Usuario eliminado correctamente"}
 
 
 @app.get("/api/usuarios/estado/{activo}", tags=["Usuarios API"])
 def listar_usuarios_por_estado(activo: bool, db: Session = Depends(get_db)):
-    return crud.obtener_usuarios_por_estado(db, activo)
+    return db.query(models.Usuario).filter(models.Usuario.activo == activo).all()
 
 
 @app.get("/api/usuarios/buscar/{nombre}", tags=["Usuarios API"])
 def buscar_usuario_por_nombre(nombre: str, db: Session = Depends(get_db)):
-    usuarios = crud.buscar_usuario_por_nombre(db, nombre)
+    usuarios = db.query(models.Usuario).filter(
+        models.Usuario.nombre.ilike(f"%{nombre}%")
+    ).all()
     if not usuarios:
         raise HTTPException(404, "No se encontraron usuarios")
     return usuarios
@@ -164,33 +206,45 @@ def listar_conductores(db: Session = Depends(get_db)):
 def crear_conductor(conductor: schemas.ConductorCrear, db: Session = Depends(get_db)):
     # Si viene con datos de vehículo, crearlo también
     if hasattr(conductor, 'crear_vehiculo') and conductor.crear_vehiculo:
-        return crud.crear_conductor_con_vehiculo(
-            db, 
-            conductor, 
-            conductor.placa_vehiculo,
-            conductor.modelo_vehiculo
-        )
+        # Crear conductor
+        nuevo_conductor = crud.crear_conductor(db, conductor)
+        
+        # Crear vehículo asociado
+        if conductor.placa_vehiculo:
+            vehiculo_data = schemas.VehiculoCrear(
+                placa=conductor.placa_vehiculo,
+                modelo=conductor.modelo_vehiculo
+            )
+            vehiculo = crud.crear_vehiculo(db, vehiculo_data, conductor_id=nuevo_conductor.id)
+        
+        return nuevo_conductor
+    
     return crud.crear_conductor(db, conductor)
 
 
 @app.patch("/api/conductores/{conductor_id}/inactivar", tags=["Conductores API"])
 def inactivar_conductor(conductor_id: int, db: Session = Depends(get_db)):
-    conductor = crud.inactivar_conductor(db, conductor_id)
+    conductor = db.query(models.Conductor).filter(models.Conductor.id == conductor_id).first()
     if not conductor:
         raise HTTPException(404, "Conductor no encontrado")
+    conductor.activo = False
+    db.commit()
+    db.refresh(conductor)
     return {"mensaje": f"Conductor '{conductor.nombre}' inactivado", "activo": conductor.activo}
 
 
 @app.get("/api/conductores/estado/{activo}", tags=["Conductores API"])
 def listar_conductores_por_estado(activo: bool, db: Session = Depends(get_db)):
-    return crud.obtener_conductores_por_estado(db, activo)
+    return db.query(models.Conductor).filter(models.Conductor.activo == activo).all()
 
 
 @app.delete("/api/conductores/{conductor_id}", tags=["Conductores API"])
 def eliminar_conductor(conductor_id: int, db: Session = Depends(get_db)):
-    eliminado = crud.eliminar_conductor(db, conductor_id)
-    if not eliminado:
+    conductor = db.query(models.Conductor).filter(models.Conductor.id == conductor_id).first()
+    if not conductor:
         raise HTTPException(404, "Conductor no encontrado")
+    db.delete(conductor)
+    db.commit()
     return {"mensaje": "Conductor eliminado correctamente"}
 
 
@@ -232,9 +286,12 @@ def crear_vehiculo(vehiculo: schemas.VehiculoCrear, db: Session = Depends(get_db
 @app.patch("/api/vehiculos/{vehiculo_id}/inactivar", tags=["Vehículos API"])
 def inactivar_vehiculo(vehiculo_id: int, db: Session = Depends(get_db)):
     """Inactivar un vehículo"""
-    vehiculo = crud.inactivar_vehiculo(db, vehiculo_id)
+    vehiculo = db.query(models.Vehiculo).filter(models.Vehiculo.id == vehiculo_id).first()
     if not vehiculo:
         raise HTTPException(status_code=404, detail="Vehículo no encontrado")
+    vehiculo.activo = False
+    db.commit()
+    db.refresh(vehiculo)
     return {
         "mensaje": f"Vehículo con placa '{vehiculo.placa}' inactivado correctamente",
         "activo": vehiculo.activo
@@ -244,13 +301,15 @@ def inactivar_vehiculo(vehiculo_id: int, db: Session = Depends(get_db)):
 @app.get("/api/vehiculos/estado/{activo}", tags=["Vehículos API"])
 def listar_vehiculos_por_estado(activo: bool, db: Session = Depends(get_db)):
     """Filtrar vehículos por estado"""
-    return crud.obtener_vehiculos_por_estado(db, activo)
+    return db.query(models.Vehiculo).filter(models.Vehiculo.activo == activo).all()
 
 
 @app.get("/api/vehiculos/buscar/{placa}", tags=["Vehículos API"])
 def buscar_vehiculo_por_placa(placa: str, db: Session = Depends(get_db)):
     """Buscar vehículos por placa"""
-    vehiculos = crud.buscar_vehiculo_por_placa(db, placa)
+    vehiculos = db.query(models.Vehiculo).filter(
+        models.Vehiculo.placa.ilike(f"%{placa}%")
+    ).all()
     if not vehiculos:
         raise HTTPException(status_code=404, detail="No se encontraron vehículos")
     return vehiculos
@@ -270,9 +329,11 @@ def obtener_vehiculos_de_conductor(conductor_id: int, db: Session = Depends(get_
 @app.delete("/api/vehiculos/{vehiculo_id}", tags=["Vehículos API"])
 def eliminar_vehiculo(vehiculo_id: int, db: Session = Depends(get_db)):
     """Eliminar vehículo permanentemente"""
-    eliminado = crud.eliminar_vehiculo(db, vehiculo_id)
-    if not eliminado:
+    vehiculo = db.query(models.Vehiculo).filter(models.Vehiculo.id == vehiculo_id).first()
+    if not vehiculo:
         raise HTTPException(status_code=404, detail="Vehículo no encontrado")
+    db.delete(vehiculo)
+    db.commit()
     return {"mensaje": "Vehículo eliminado correctamente"}
 
 
@@ -356,8 +417,8 @@ def obtener_viajes_activos_conductor(conductor_id: int, db: Session = Depends(ge
 @app.delete("/api/viajes/{viaje_id}", tags=["Viajes API"])
 def eliminar_viaje(viaje_id: int, db: Session = Depends(get_db)):
     """Eliminar viaje permanentemente"""
-    eliminado = crud.eliminar_viaje(db, viaje_id)
-    if not eliminado:
+    viaje = crud.eliminar_viaje(db, viaje_id)
+    if not viaje:
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
     return {"mensaje": "Viaje eliminado correctamente"}
 
@@ -438,12 +499,6 @@ async def subir_foto_vehiculo(vehiculo_id: int, file: UploadFile = File(...), db
 # ============================================
 # 🔍 BÚSQUEDA GLOBAL
 # ============================================
-
-@app.get("/buscar", tags=["Búsqueda"])
-def buscar_page(request: Request):
-    """Página de búsqueda"""
-    return templates.TemplateResponse("buscar.html", {"request": request})
-
 
 @app.get("/api/buscar", tags=["Búsqueda"])
 def buscar_global(q: str, db: Session = Depends(get_db)):
