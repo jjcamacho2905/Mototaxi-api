@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from pathlib import Path
 import shutil
 import uuid
+import os
 
 import models, schemas, crud
 from database import engine, get_db, Base
@@ -24,9 +25,10 @@ app = FastAPI(
 templates = Jinja2Templates(directory="app/templates")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# 📸 CARPETA PARA UPLOADS
+# 📸 CARPETA PARA UPLOADS - CREAR SI NO EXISTE
 UPLOAD_DIR = Path("app/static/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+print(f"✅ Carpeta de uploads creada/verificada: {UPLOAD_DIR.absolute()}")
 
 # 🔧 WORKAROUND PARA EL ERROR DE UNICODE EN FASTAPI
 from fastapi.encoders import ENCODERS_BY_TYPE
@@ -47,8 +49,13 @@ def inicio_page(request: Request):
 # ============================================
 
 @app.get("/dashboard", tags=["Páginas HTML"])
-def dashboard_page(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+def dashboard_page(request: Request, db: Session = Depends(get_db)):
+    # Obtener todos los usuarios activos
+    usuarios = db.query(models.Usuario).filter(models.Usuario.activo == True).all()
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "usuarios": usuarios
+    })
 
 
 @app.get("/conductores", tags=["Páginas HTML"])
@@ -78,10 +85,16 @@ def buscar_page(request: Request):
 # ============================================
 
 @app.get("/usuarios", tags=["Usuarios HTML"])
-def usuarios_lista(request: Request, db: Session = Depends(get_db)):
-    """Lista de usuarios (página principal)"""
+def usuarios_crear_form(request: Request):
+    """Formulario para crear nuevo usuario"""
+    return templates.TemplateResponse("Usuarios.html", {"request": request})
+
+
+@app.get("/lista-usuarios", tags=["Usuarios HTML"])
+def lista_usuarios_page(request: Request, db: Session = Depends(get_db)):
+    """Lista completa de todos los usuarios"""
     usuarios = db.query(models.Usuario).filter(models.Usuario.activo == True).all()
-    return templates.TemplateResponse("Usuarios.html", {
+    return templates.TemplateResponse("lista_usuarios.html", {
         "request": request,
         "usuarios": usuarios
     })
@@ -89,8 +102,8 @@ def usuarios_lista(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/usuarios/nuevo", tags=["Usuarios HTML"])
 def nuevo_usuario_form(request: Request):
-    """Formulario para crear nuevo usuario"""
-    return templates.TemplateResponse("usuario_form.html", {"request": request})
+    """Formulario para crear nuevo usuario (ruta alternativa)"""
+    return templates.TemplateResponse("Usuarios.html", {"request": request})
 
 
 @app.post("/usuarios/nuevo", tags=["Usuarios HTML"])
@@ -116,17 +129,17 @@ async def crear_usuario_html(
         raise HTTPException(400, "La imagen no debe superar 5MB")
     
     # Generar nombre único para la foto
-    import uuid
     ext = foto.filename.split(".")[-1]
     filename = f"usuario_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = UPLOAD_DIR / filename
     
     # Guardar archivo
-    import shutil
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(foto.file, buffer)
     
     foto_path = f"/static/uploads/{filename}"
+    
+    print(f"✅ Imagen guardada: {filepath}")
     
     # Crear usuario SIN contraseña
     db_usuario = models.Usuario(
@@ -213,14 +226,15 @@ def crear_conductor(conductor: schemas.ConductorCrear, db: Session = Depends(get
     # Crear conductor
     nuevo_conductor = crud.crear_conductor(db, conductor)
     
-    # Si pidió crear vehículo, crearlo
+    # Si pidió crear vehículo, crearlo y asignarlo al conductor
     if conductor.crear_vehiculo and conductor.placa_vehiculo:
         vehiculo_data = schemas.VehiculoCrear(
             placa=conductor.placa_vehiculo,
             modelo=conductor.modelo_vehiculo,
-            conductor_id=nuevo_conductor.id  # Asignar al conductor recién creado
+            conductor_id=nuevo_conductor.id  # ✅ ASIGNAR CONDUCTOR
         )
         vehiculo = crud.crear_vehiculo(db, vehiculo_data)
+        print(f"✅ Vehículo {vehiculo.placa} asignado a conductor {nuevo_conductor.nombre}")
     
     return nuevo_conductor
 
@@ -283,7 +297,9 @@ def listar_vehiculos(db: Session = Depends(get_db)):
 @app.post("/api/vehiculos/", tags=["Vehículos API"])
 def crear_vehiculo(vehiculo: schemas.VehiculoCrear, db: Session = Depends(get_db)):
     """Crear un nuevo vehículo"""
-    return crud.crear_vehiculo(db, vehiculo)
+    nuevo_vehiculo = crud.crear_vehiculo(db, vehiculo)
+    print(f"✅ Vehículo creado: {nuevo_vehiculo.placa} (Conductor ID: {nuevo_vehiculo.conductor_id})")
+    return nuevo_vehiculo
 
 
 @app.patch("/api/vehiculos/{vehiculo_id}/inactivar", tags=["Vehículos API"])
@@ -353,7 +369,9 @@ def listar_viajes(db: Session = Depends(get_db)):
 @app.post("/api/viajes/", tags=["Viajes API"])
 def crear_viaje(viaje: schemas.ViajeCrear, db: Session = Depends(get_db)):
     """Crear un nuevo viaje"""
-    return crud.crear_viaje(db, viaje)
+    nuevo_viaje = crud.crear_viaje(db, viaje)
+    print(f"✅ Viaje creado: ID={nuevo_viaje.id}, Conductor={nuevo_viaje.conductor_id}, Vehículo={nuevo_viaje.vehiculo_id}")
+    return nuevo_viaje
 
 
 @app.patch("/api/viajes/{viaje_id}/completar", tags=["Viajes API"])
@@ -427,7 +445,7 @@ def eliminar_viaje(viaje_id: int, db: Session = Depends(get_db)):
 
 
 # ============================================
-# 📸 SUBIDA DE IMÁGENES
+# 📸 SUBIDA DE IMÁGENES - ✅ CORREGIDO
 # ============================================
 
 @app.post("/api/upload/usuario/{usuario_id}", tags=["Uploads"])
@@ -444,11 +462,14 @@ async def subir_foto_usuario(usuario_id: int, file: UploadFile = File(...), db: 
     filename = f"usuario_{usuario_id}_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = UPLOAD_DIR / filename
     
+    # ✅ GUARDAR ARCHIVO
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
     usuario.foto_path = f"/static/uploads/{filename}"
     db.commit()
+    
+    print(f"✅ Foto de usuario guardada: {filepath}")
     
     return {"mensaje": "Foto subida exitosamente", "ruta": usuario.foto_path}
 
@@ -467,11 +488,14 @@ async def subir_foto_conductor(conductor_id: int, file: UploadFile = File(...), 
     filename = f"conductor_{conductor_id}_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = UPLOAD_DIR / filename
     
+    # ✅ GUARDAR ARCHIVO
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
     conductor.foto_path = f"/static/uploads/{filename}"
     db.commit()
+    
+    print(f"✅ Foto de conductor guardada: {filepath}")
     
     return {"mensaje": "Foto subida exitosamente", "ruta": conductor.foto_path}
 
@@ -490,11 +514,14 @@ async def subir_foto_vehiculo(vehiculo_id: int, file: UploadFile = File(...), db
     filename = f"vehiculo_{vehiculo_id}_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = UPLOAD_DIR / filename
     
+    # ✅ GUARDAR ARCHIVO
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
     vehiculo.foto_path = f"/static/uploads/{filename}"
     db.commit()
+    
+    print(f"✅ Foto de vehículo guardada: {filepath}")
     
     return {"mensaje": "Foto subida exitosamente", "ruta": vehiculo.foto_path}
 

@@ -184,13 +184,12 @@ def conductor_esta_libre(db: Session, conductor_id: int) -> bool:
     return viajes_activos == 0
 
 # ======================
-# 🚗 CRUD VEHÍCULOS
+# 🚗 CRUD VEHÍCULOS - ✅ ACTUALIZADO
 # ======================
 def crear_vehiculo(db: Session, vehiculo: schemas.VehiculoCrear):
     placa = validar_placa(vehiculo.placa)
     
-    # ✅ PERMITIR PLACAS DUPLICADAS - Eliminada validación
-    # Si quieres que las placas sean únicas, descomenta las siguientes líneas:
+    # ✅ PERMITIR PLACAS DUPLICADAS (si quieres que sean únicas, descomenta)
     # existe = db.query(models.Vehiculo).filter(models.Vehiculo.placa == placa).first()
     # if existe:
     #     raise HTTPException(400, f"La placa '{placa}' ya está registrada")
@@ -198,11 +197,15 @@ def crear_vehiculo(db: Session, vehiculo: schemas.VehiculoCrear):
     nuevo_vehiculo = models.Vehiculo(
         placa=placa,
         modelo=vehiculo.modelo.strip() if vehiculo.modelo else None,
+        conductor_id=vehiculo.conductor_id,  # ✅ ASIGNAR CONDUCTOR
         activo=True
     )
     db.add(nuevo_vehiculo)
     db.commit()
     db.refresh(nuevo_vehiculo)
+    
+    print(f"✅ Vehículo creado: {placa} - Conductor ID: {vehiculo.conductor_id}")
+    
     return nuevo_vehiculo
 
 def obtener_vehiculos(db: Session):
@@ -288,6 +291,9 @@ def crear_viaje(db: Session, viaje: schemas.ViajeCrear):
     db.add(nuevo_viaje)
     db.commit()
     db.refresh(nuevo_viaje)
+    
+    print(f"✅ Viaje creado: Usuario={viaje.usuario_id}, Conductor={viaje.conductor_id}, Vehículo={viaje.vehiculo_id}")
+    
     return nuevo_viaje
 
 def obtener_viajes(db: Session):
