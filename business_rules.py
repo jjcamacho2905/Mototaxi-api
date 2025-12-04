@@ -59,18 +59,25 @@ class BusinessRules:
     
     @staticmethod
     def validar_conductor_disponible(db: Session, conductor_id: int) -> None:
-        conductor = db.query(models.Conductor).filter(models.Conductor.id == conductor_id).first()
-        if not conductor:
-            raise HTTPException(404, "Conductor no encontrado")
-        if not conductor.activo:
-            raise HTTPException(400, "El conductor está inactivo y no puede ser asignado")
-        viajes_activos = db.query(models.Viaje).filter(
-            models.Viaje.conductor_id == conductor_id,
-            models.Viaje.estado.in_(['pendiente', 'en_curso']),
-            models.Viaje.activo == True
-        ).count()
-        if viajes_activos > 0:
-            raise HTTPException(400, f"El conductor ya tiene {viajes_activos} viaje(s) activo(s)")
+       """Valida que el conductor no tenga viajes activos"""
+    conductor = db.query(models.Conductor).filter(models.Conductor.id == conductor_id).first()
+    if not conductor:
+        raise HTTPException(404, "Conductor no encontrado")
+    if not conductor.activo:
+        raise HTTPException(400, "El conductor está inactivo y no puede ser asignado")
+    
+    # Contar viajes activos (pendiente o en_curso)
+    viajes_activos = db.query(models.Viaje).filter(
+        models.Viaje.conductor_id == conductor_id,
+        models.Viaje.estado.in_(['pendiente', 'en_curso']),
+        models.Viaje.activo == True
+    ).count()
+    
+    if viajes_activos > 0:
+        raise HTTPException(
+            400, 
+            f"El conductor ya tiene {viajes_activos} viaje(s) activo(s) y no puede ser asignado a otro viaje"
+        )
     
     @staticmethod
     def validar_licencia_unica(db: Session, licencia: str, conductor_id: int = None) -> None:

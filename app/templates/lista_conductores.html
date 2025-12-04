@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏍️ Lista de Conductores - Mototaxi Supatá</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .navbar {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .navbar a {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .navbar a:hover {
+            background: #5568d3;
+        }
+        
+        .actions {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: #45a049;
+        }
+        
+        .btn-reload {
+            background: #2196F3;
+        }
+        
+        .btn-reload:hover {
+            background: #0b7dda;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .conductores-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        
+        .conductor-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .conductor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        
+        .conductor-foto {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 15px;
+            display: block;
+            border: 4px solid #667eea;
+        }
+        
+        .conductor-icon {
+            font-size: 80px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .conductor-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 22px;
+            text-align: center;
+        }
+        
+        .conductor-info {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 15px;
+        }
+        
+        .conductor-info .icon {
+            font-size: 18px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .badge.activo {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge.inactivo {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .vehiculos-conductor {
+            background: #f0f7ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #2196F3;
+        }
+        
+        .vehiculos-conductor h4 {
+            color: #1976D2;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .vehiculo-item {
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+            margin: 5px 0;
+            font-size: 13px;
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-small {
+            padding: 10px 15px;
+            font-size: 14px;
+            flex: 1;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-warning {
+            background: #ff9800;
+        }
+        
+        .btn-warning:hover {
+            background: #f57c00;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+        }
+        
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .no-conductores {
+            text-align: center;
+            padding: 60px;
+            background: white;
+            border-radius: 10px;
+            color: #666;
+        }
+        
+        .no-conductores h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .stats-header {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .stats-header h2 {
+            color: #667eea;
+            font-size: 24px;
+        }
+        
+        .total-conductores {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        @media (max-width: 768px) {
+            .conductores-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏍️ Lista de Conductores</h1>
+            <nav class="navbar">
+                <a href="/">🏠 Inicio</a>
+                <a href="/dashboard">📊 Dashboard</a>
+                <a href="/conductores">➕ Crear Conductor</a>
+                <a href="/lista-conductores">📋 Lista Conductores</a>
+                <a href="/vehiculos">🚗 Vehículos</a>
+                <a href="/viajes">🚖 Viajes</a>
+                <a href="/buscar">🔍 Buscar</a>
+            </nav>
+        </header>
+        
+        <div class="actions">
+            <a href="/conductores" class="btn">➕ Crear Nuevo Conductor</a>
+            <button class="btn btn-reload" onclick="location.reload()">🔄 Recargar</button>
+            
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="🔍 Buscar por nombre..." 
+                    onkeyup="filtrarConductores()"
+                >
+            </div>
+        </div>
+        
+        <div class="stats-header">
+            <h2>Todos los Conductores</h2>
+            <div class="total-conductores">
+                Total: <span id="totalConductores">0</span>
+            </div>
+        </div>
+        
+        <div id="conductoresGrid" class="conductores-grid">
+            <div class="loading">⏳ Cargando conductores...</div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', cargarConductores);
+        
+        async function cargarConductores() {
+            const grid = document.getElementById('conductoresGrid');
+            
+            try {
+                // Cargar conductores Y sus vehículos
+                const [condRes, vehRes] = await Promise.all([
+                    fetch('/api/conductores/'),
+                    fetch('/api/vehiculos/')
+                ]);
+                
+                const conductores = await condRes.json();
+                const todosVehiculos = await vehRes.json();
+                
+                document.getElementById('totalConductores').textContent = conductores.length;
+                
+                if (conductores.length === 0) {
+                    grid.innerHTML = `
+                        <div class="no-conductores" style="grid-column: 1/-1;">
+                            <h2>No hay conductores registrados</h2>
+                            <p>Crea tu primer conductor para comenzar</p>
+                            <br>
+                            <a href="/conductores" class="btn">➕ Crear Conductor</a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Renderizar conductores
+                grid.innerHTML = conductores.map(conductor => {
+                    // Filtrar vehículos de este conductor
+                    const vehiculosConductor = todosVehiculos.filter(v => v.conductor_id === conductor.id);
+                    
+                    let vehiculosHTML = '';
+                    if (vehiculosConductor.length > 0) {
+                        vehiculosHTML = `
+                            <div class="vehiculos-conductor">
+                                <h4>🚗 Vehículos Asignados (${vehiculosConductor.length})</h4>
+                                ${vehiculosConductor.map(v => `
+                                    <div class="vehiculo-item">
+                                        🏍️ <strong>${v.placa}</strong> - ${v.modelo || 'Sin modelo'}
+                                        ${v.activo ? '✅' : '❌ Inactivo'}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    } else {
+                        vehiculosHTML = `
+                            <div class="vehiculos-conductor">
+                                <p style="text-align:center; color:#999;">Sin vehículos asignados</p>
+                            </div>
+                        `;
+                    }
+                    
+                    return `
+                        <div class="conductor-card" data-nombre="${conductor.nombre.toLowerCase()}">
+                            ${conductor.foto_path 
+                                ? `<img src="${conductor.foto_path}" alt="${conductor.nombre}" class="conductor-foto">`
+                                : '<div class="conductor-icon">🏍️</div>'
+                            }
+                            
+                            <h3>${conductor.nombre}</h3>
+                            
+                            <div class="conductor-info">
+                                <span class="icon">🪪</span>
+                                <span>Licencia: ${conductor.licencia || 'N/A'}</span>
+                            </div>
+                            
+                            <div class="conductor-info">
+                                <span class="icon">🆔</span>
+                                <span>ID: ${conductor.id}</span>
+                            </div>
+                            
+                            <div style="text-align: center;">
+                                <span class="badge ${conductor.activo ? 'activo' : 'inactivo'}">
+                                    ${conductor.activo ? '✅ Activo' : '❌ Inactivo'}
+                                </span>
+                            </div>
+                            
+                            ${vehiculosHTML}
+                            
+                            <div class="card-actions">
+                                ${conductor.activo ? `
+                                    <button class="btn-small btn-warning" onclick="inactivarConductor(${conductor.id}, '${conductor.nombre}')">
+                                        ⏸️ Inactivar
+                                    </button>
+                                ` : `
+                                    <button class="btn-small" style="background:#4CAF50;" onclick="activarConductor(${conductor.id}, '${conductor.nombre}')">
+                                        ✅ Reactivar
+                                    </button>
+                                `}
+                                <button class="btn-small btn-danger" onclick="eliminarConductor(${conductor.id}, '${conductor.nombre}')">
+                                    🗑️ Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                grid.innerHTML = `
+                    <div class="no-conductores" style="grid-column: 1/-1;">
+                        <h2>❌ Error al cargar conductores</h2>
+                        <p>${error.message}</p>
+                        <button class="btn" onclick="location.reload()">🔄 Reintentar</button>
+                    </div>
+                `;
+            }
+        }
+        
+        function filtrarConductores() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.conductor-card');
+            let visibleCount = 0;
+            
+            cards.forEach(card => {
+                const nombre = card.getAttribute('data-nombre') || '';
+                
+                if (nombre.includes(searchTerm)) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            document.getElementById('totalConductores').textContent = visibleCount;
+        }
+        
+        async function inactivarConductor(id, nombre) {
+            if (!confirm(`¿Inactivar al conductor "${nombre}"?\n\nNo podrá realizar viajes hasta reactivarlo.`)) return;
+            
+            try {
+                const response = await fetch(`/api/conductores/${id}/inactivar`, {
+                    method: 'PATCH'
+                });
+                
+                if (response.ok) {
+                    alert(`✅ Conductor "${nombre}" inactivado correctamente`);
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    alert(`❌ Error: ${error.detail || 'No se pudo inactivar'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al inactivar conductor');
+            }
+        }
+        
+        async function activarConductor(id, nombre) {
+            if (!confirm(`¿Reactivar al conductor "${nombre}"?`)) return;
+            
+            try {
+                const response = await fetch(`/api/conductores/${id}/activar`, {
+                    method: 'PATCH'
+                });
+                
+                if (response.ok) {
+                    alert(`✅ Conductor "${nombre}" reactivado correctamente`);
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    alert(`❌ Error: ${error.detail || 'No se pudo reactivar'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al reactivar conductor');
+            }
+        }
+        
+        async function eliminarConductor(id, nombre) {
+            if (!confirm(`⚠️ ¿ELIMINAR PERMANENTEMENTE al conductor "${nombre}"?\n\nEsta acción NO se puede deshacer.`)) return;
+            
+            const confirmacion = prompt('Escribe "ELIMINAR" en mayúsculas para confirmar:');
+            if (confirmacion !== 'ELIMINAR') {
+                alert('❌ Eliminación cancelada');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/conductores/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert(`✅ Conductor "${nombre}" eliminado permanentemente`);
+                    location.reload();
+                } else {
+                    const error = await response.json();
+                    alert(`❌ Error: ${error.detail || 'No se pudo eliminar'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al eliminar conductor');
+            }
+        }
+    </script>
+</body>
+</html>

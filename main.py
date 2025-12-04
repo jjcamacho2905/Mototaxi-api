@@ -192,68 +192,7 @@ def buscar_page(request: Request):
 @app.get("/inactivos", tags=["Páginas HTML"])
 def inactivos_page(request: Request, db: Session = Depends(get_db)):
     """Página de gestión de usuarios, conductores y vehículos inactivos"""
-    from sqlalchemy.orm import joinedload
-    
-    # Obtener usuarios inactivos
-    usuarios_inactivos = db.query(models.Usuario).filter(
-        models.Usuario.activo == False
-    ).all()
-    
-    # Obtener conductores inactivos con sus vehículos
-    conductores_inactivos = db.query(models.Conductor).options(
-        joinedload(models.Conductor.vehiculos)
-    ).filter(
-        models.Conductor.activo == False
-    ).all()
-    
-    # Obtener vehículos inactivos
-    vehiculos_inactivos = db.query(models.Vehiculo).filter(
-        models.Vehiculo.activo == False
-    ).all()
-    
-    # Contar totales
-    total_usuarios = len(usuarios_inactivos)
-    total_conductores = len(conductores_inactivos)
-    total_vehiculos = len(vehiculos_inactivos)
-    
-    # Obtener estadísticas para el gráfico
-    from sqlalchemy import func
-    from datetime import datetime
-    
-    # Datos para el gráfico de estados
-    viajes_completados = db.query(models.Viaje).filter(
-        models.Viaje.estado == 'completado',
-        models.Viaje.activo == True
-    ).count()
-    
-    viajes_en_curso = db.query(models.Viaje).filter(
-        models.Viaje.estado == 'en_curso',
-        models.Viaje.activo == True
-    ).count()
-    
-    viajes_pendientes = db.query(models.Viaje).filter(
-        models.Viaje.estado == 'pendiente',
-        models.Viaje.activo == True
-    ).count()
-    
-    viajes_cancelados = db.query(models.Viaje).filter(
-        models.Viaje.estado == 'cancelado',
-        models.Viaje.activo == True
-    ).count()
-    
-    return templates.TemplateResponse("inactivos.html", {
-        "request": request,
-        "usuarios": usuarios_inactivos,
-        "conductores": conductores_inactivos,
-        "vehiculos": vehiculos_inactivos,
-        "total_usuarios": total_usuarios,
-        "total_conductores": total_conductores,
-        "total_vehiculos": total_vehiculos,
-        "viajes_completados": viajes_completados,
-        "viajes_en_curso": viajes_en_curso,
-        "viajes_pendientes": viajes_pendientes,
-        "viajes_cancelados": viajes_cancelados
-    })
+    return templates.TemplateResponse("inactivos.html", {"request": request})
 
 
 # ============================================
