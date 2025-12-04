@@ -255,13 +255,12 @@
     <div class="navbar">
         <h1>🚖 Mototaxi Supatá</h1>
         <div class="navbar-links">
-            <a href="/">🏠 Inicio</a>
-            <a href="/dashboard">📊 Dashboard</a>
-            <a href="/usuarios">👥 Usuarios</a>
-            <a href="/conductores">🏍️ Conductores</a>
-            <a href="/vehiculos">🚗 Vehículos</a>
-            <a href="/viajes">🚖 Viajes</a>
-            <a href="/inactivos">⏸️ Inactivos</a>
+            <a href="/"> Inicio</a>
+            <a href="/dashboard"> Dashboard</a>
+            <a href="/usuarios"> Usuarios</a>
+            <a href="/conductores"> Conductores</a>
+            <a href="/vehiculos"> Vehículos</a>
+            <a href="/viajes"> Viajes</a>
         </div>
     </div>
 
@@ -269,7 +268,7 @@
     <div class="stats-grid">
         <!-- Totales -->
         <div class="stat-card">
-            <div class="icon"></div>
+            <div class="icon">👥</div>
             <div class="number">{{ total_usuarios }}</div>
             <div class="label">Usuarios Activos</div>
         </div>
@@ -335,19 +334,19 @@
     <div class="charts-container">
         <!-- Gráfica de viajes por día -->
         <div class="chart-card">
-            <h3>Viajes por Día (Últimos 7 días)</h3>
+            <h3>📈 Viajes por Día (Últimos 7 días)</h3>
             <canvas id="viajesPorDiaChart"></canvas>
         </div>
 
         <!-- Gráfica de estados de viajes -->
         <div class="chart-card">
-            <h3> Distribución de Estados</h3>
+            <h3>📊 Distribución de Estados</h3>
             <canvas id="estadosChart"></canvas>
         </div>
 
         <!-- Top destinos -->
         <div class="chart-card">
-            <h3> Top 5 Destinos Más Solicitados</h3>
+            <h3>🎯 Top 5 Destinos Más Solicitados</h3>
             <ul class="destinos-list">
                 {% for destino, cantidad in destinos_populares %}
                 <li class="destino-item">
@@ -361,7 +360,7 @@
 
     <!-- VIAJES RECIENTES -->
     <div class="viajes-recientes">
-        <h3> Viajes Recientes</h3>
+        <h3>🚖 Viajes Recientes</h3>
         {% for viaje in viajes_recientes %}
         <div class="viaje-item">
             <div class="viaje-info">

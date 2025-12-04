@@ -126,17 +126,23 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
         func.count(models.Viaje.id).desc()
     ).limit(5).all()
     
-    # Viajes recientes (últimos 10)
-    viajes_recientes = db.query(models.Viaje).filter(
-        models.Viaje.activo == True
-    ).order_by(
-        models.Viaje.fecha.desc()
+    # ✅ NUEVOS DATOS: Usuarios y Vehículos Inactivos
+    usuarios_inactivos = db.query(models.Usuario).filter(
+        models.Usuario.activo == False
     ).limit(10).all()
     
-    # Usuarios activos (para la lista)
-    usuarios = db.query(models.Usuario).filter(
-        models.Usuario.activo == True
-    ).limit(20).all()
+    vehiculos_inactivos = db.query(models.Vehiculo).filter(
+        models.Vehiculo.activo == False
+    ).limit(10).all()
+    
+    # Contar totales de inactivos
+    total_usuarios_inactivos = db.query(models.Usuario).filter(
+        models.Usuario.activo == False
+    ).count()
+    
+    total_vehiculos_inactivos = db.query(models.Vehiculo).filter(
+        models.Vehiculo.activo == False
+    ).count()
     
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
@@ -152,8 +158,11 @@ def dashboard_page(request: Request, db: Session = Depends(get_db)):
         "ingreso_promedio": ingreso_promedio,
         "viajes_por_dia": viajes_por_dia,
         "destinos_populares": destinos_populares,
-        "viajes_recientes": viajes_recientes,
-        "usuarios": usuarios
+        # ✅ NUEVOS DATOS
+        "usuarios_inactivos": usuarios_inactivos,
+        "vehiculos_inactivos": vehiculos_inactivos,
+        "total_usuarios_inactivos": total_usuarios_inactivos,
+        "total_vehiculos_inactivos": total_vehiculos_inactivos
     })
 
 @app.get("/conductores", tags=["Páginas HTML"])

@@ -206,7 +206,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>🚗 Gestión de Vehículos</h1>
+            <h1> Gestión de Vehículos</h1>
             <nav class="navbar">
                 <a href="/dashboard"> Dashboard</a>
                 <a href="/usuarios"> Usuarios</a>
@@ -223,14 +223,14 @@
         </div>
         
         <div id="vehiculosGrid" class="vehiculos-grid">
-            <div class="loading">⏳ Cargando vehículos...</div>
+            <div class="loading"> Cargando vehículos...</div>
         </div>
     </div>
     
     <div id="modalVehiculo" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
-            <h2>➕ Nuevo Vehículo</h2>
+            <h2> Nuevo Vehículo</h2>
             <form id="formVehiculo" onsubmit="crearVehiculo(event)">
                 <div class="form-group">
                     <label>Placa:</label>
@@ -350,7 +350,7 @@
                     setTimeout(cargarVehiculos, 500);
                 }
             } catch (error) {
-                alert('❌ Error: ' + error.message);
+                alert(' Error: ' + error.message);
             }
         }
         
